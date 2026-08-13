@@ -1,0 +1,56 @@
+from work_card import date as dt
+
+def test_get_free_hours_between():
+    r = dt.get_free_hours_between('2026-06-10','2026-08-09')
+    assert r == 720
+
+    r = dt.get_free_hours_between('2026-06-10','2026-08-10')
+    assert r == 732
+
+    r = dt.get_free_hours_between('2026-06-10','2026-08-11')
+    assert r == 744
+
+    r = dt.get_free_hours_between('2026-06-10','2026-08-17')
+    assert r == 816
+
+
+def test_recursive_count_months():
+    r = dt.recursive_count_months('2026-06-10','2026-08-09')
+    assert r == 2
+
+    r = dt.recursive_count_months('2026-06-10','2026-08-10')
+    assert r == 3
+
+    r = dt.recursive_count_months('2026-06-10','2027-08-11')
+    assert r == 15
+
+    r = dt.recursive_count_months('2026-06-10','2027-08-17')
+    assert r == 15
+
+
+
+def test_sub_hours():
+
+
+    r = dt.sub_hours('2026-08-01 09:27:13', '2026-07-16 18:31:37')
+
+    assert r == [{'fd': '2026-07-01', 'h': 365.47}, {'fd': '2026-08-01', 'h': 9.45}]
+
+    r = dt.sub_hours('2026-02-19 01:23:34', '2026-01-19 01:23:34')
+    
+    assert r == [{'fd': '2026-01-01', 'h': 310.61}, {'fd': '2026-02-01', 'h': 433.39}]
+
+    r = dt.sub_hours('2026-01-31 23:59:59','2026-01-31 12:09:46')
+    
+    assert r == [{'fd': '2026-01-01', 'h': 11.84}]
+
+
+def test_seperate_date_into_months():
+
+    r = dt.seperate_date_into_months(start_date='2025-11-03',end_date='2026-03-08')
+
+    assert r == [['2025-11-03', '2025-11-30'], '2025-12-01', '2026-01-01', '2026-02-01', ['2026-03-01', '2026-03-08']]
+
+    r = dt.seperate_date_into_months(start_date='2025-11-03',end_date='2025-11-30')
+
+    assert r == [['2025-11-03', '2025-11-30']]

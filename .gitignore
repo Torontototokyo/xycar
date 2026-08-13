@@ -1,0 +1,10 @@
+*.xlsx
+*.log
+*.doc
+*cache*
+*.sql
+*.encrypted
+.env
+*.csv
+*.log
+.vscode/*
