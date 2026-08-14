@@ -313,10 +313,15 @@ def update_or_insert_car_leave_log_summery_by_month(car_no:str,start_dt):
 
 def summary_hour(car_no,date)->float:
     engine = init_engine()
+    car_nos = []
+    if "," in car_no:
+        car_nos = car_no.split(",")
+    else:
+        car_nos = [car_no]
 
     with Session(engine) as session:
          h = session.scalar(select(Summary.hours).where(Summary.start_dt == date)\
-                         .where(Summary.car_no == car_no))
+                         .where(Summary.car_no.in_(car_nos)))
          
          
     return h or 0
@@ -324,7 +329,11 @@ def summary_hour(car_no,date)->float:
 
 def sum_logs(car_no,start_dt,end_dt)->float:
 
-    # print(f'start_dt:{start_dt},end_dt:{end_dt},car_no:{car_no}')
+    car_nos = []
+    if "," in car_no:
+        car_nos = car_no.split(",")
+    else:
+        car_nos = [car_no]
 
     if start_dt == end_dt:
 
@@ -346,7 +355,7 @@ def sum_logs(car_no,start_dt,end_dt)->float:
         stmt = select(func.sum(Logs.停车时长A小时Z))\
         .where(Logs.入场时间 > start_dt)\
         .where(Logs.出场时间 < end_dt)\
-        .where(Logs.车牌号码 == car_no)
+        .where(Logs.车牌号码.in_(car_nos))
 
         r = session.scalar(stmt)
 
