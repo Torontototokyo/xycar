@@ -2,7 +2,7 @@ import re
 from datetime import datetime
 import pandas as pd
 import os
-import date
+import work_card.date as date
 from pathlib import Path
 
 

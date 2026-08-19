@@ -5,17 +5,38 @@ from sqlalchemy.orm import Session,DeclarativeBase,mapped_column,relationship,Ma
 from sqlalchemy import insert,update,String
 from sqlalchemy.sql import func
 from sqlalchemy.exc import MultipleResultsFound
-import date
+import work_card.date as date
 from dateutil.relativedelta import relativedelta
 import pandas as pd
-import card
+import work_card.card as card
 import numpy as np
-import utils
+import work_card.utils as utils
 
 
 class Base(DeclarativeBase):
     pass
 
+class CarParkingOT(Base):
+    __tablename__ = 'car_parking_ot'
+    id: Mapped[int] = mapped_column(primary_key=True)
+    car_no:Mapped[str] = mapped_column(String(100))
+    created_at:Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),           # or False
+        default=func.now(),                # for INSERT
+        onupdate=func.now(),               # ← automatically updates on every UPDATE
+        nullable=False
+    )
+    updated_at:Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),           # or False
+        default=func.now(),                # for INSERT
+        onupdate=func.now(),               # ← automatically updates on every UPDATE
+        nullable=False
+    )
+    hours:Mapped[float] = mapped_column(Float(2))
+    removed_at:Mapped[str] = mapped_column(String(30))
+    arose_at:Mapped[str] = mapped_column(String(30))
+    def __repr__(self) -> str:
+        return f"CarParkingOT(id={self.id!r}, hours={self.hours!r}, card_no={self.car_no!r},start_dt={self.start_dt!r},end_dt={self.end_dt!r})"
 class Summary(Base):
     __tablename__ = 'get_car_leave_log_summery_by_month'
     id: Mapped[int] = mapped_column(primary_key=True)
