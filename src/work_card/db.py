@@ -419,19 +419,29 @@ def expire_card(car_no:str,hours:float,overtime:float,free_h:float)->int:
 def add_or_update_ot_record(car_no:str,hours:float):
 
     engine = init_engine()
-
+    now = datetime.now().strftime(date.FM_YMDT)
+    today = datetime.now().strftime(date.YMD)
     with Session(engine) as session:
-    
-        now = datetime.now().strftime(date.FM_YMDT)
-        today = datetime.now().strftime(date.YMD)
-        stmt = insert(CarParkingOT).values(
-            car_no=car_no,
-            hours=hours,
-            arose_at=today,
-            created_at=now,
-            updated_at=now
-        )
-        session.execute(stmt)
+
+        ## if today ot_record exist
+        stmt = select(CarParkingOT).where(CarParkingOT.car_no == car_no)\
+            .where(CarParkingOT.removed_at == None)\
+            .where(CarParkingOT.arose_at == today)
+
+        first = session.execute(stmt).scalar_one_or_none()
+        
+        if first:
+            update(CarParkingOT).where(CarParkingOT.id == first.id)\
+            .values({hours:hours})
+        else:
+            stmt = insert(CarParkingOT).values(
+                car_no=car_no,
+                hours=hours,
+                arose_at=today,
+                created_at=now,
+                updated_at=now
+            )
+            session.execute(stmt)
 
         session.commit()
 
