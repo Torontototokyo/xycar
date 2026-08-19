@@ -8,6 +8,8 @@ def main():
     args = parser.parse_args()
 
     file = args.sends_sms_file
+    if file is None:
+        return 0
 
     df = pd.read_excel(file)
 
