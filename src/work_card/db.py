@@ -5,12 +5,12 @@ from sqlalchemy.orm import Session,DeclarativeBase,mapped_column,relationship,Ma
 from sqlalchemy import insert,update,String
 from sqlalchemy.sql import func
 from sqlalchemy.exc import MultipleResultsFound
-import work_card.date as date
+import date as date
 from dateutil.relativedelta import relativedelta
 import pandas as pd
-import work_card.card as card
+import card as card
 import numpy as np
-import work_card.utils as utils
+import utils as utils
 
 
 class Base(DeclarativeBase):
@@ -406,7 +406,7 @@ def expire_card(car_no:str,hours:float,overtime:float,free_h:float)->int:
     with Session(engine) as session:
 
         stmt = update(Card).where(Card.车牌号码 == car_no)\
-                .where(Card.卡状态.is_not('过期'))\
+                .where(Card.卡状态 != '过期')\
                 .values({
                     '实际停车时长':hours,
                     '超时小时':overtime,
@@ -454,7 +454,7 @@ def remove_ot_record(car_no:str)->int:
         stmt = update(CarParkingOT).where(CarParkingOT.car_no == car_no)\
                         .where(CarParkingOT.removed_at == None)\
                         .values({
-                            'removed_at':datetime.now().strftime(date.FM_YMDT)
+                            'removed_at':datetime.now().strftime(date.YMD)
                         })
 
         res = session.execute(stmt)
@@ -469,65 +469,70 @@ def update_card_parking_time():
     engine = init_engine()
 
     with Session(engine) as session:
+        try:
 
-        expired = card.get_expired()
-        stmt = select(Card.车牌号码,Card.开始期限,Card.截止期限,Card.总免费停车时长)\
-        .where(Card.卡状态.in_(['正常','临期']))\
-        .where(Card.车牌号码.notin_(expired))
-        result = session.execute(stmt).all()
-        
-        for r in result:
-
-            car_no = r[0]
-            start_dt = r[1]
-            end_dt = r[2]
-            # free_h = r[3]
+            expired = card.get_expired()
+            stmt = select(Card.车牌号码,Card.开始期限,Card.截止期限,Card.总免费停车时长)\
+            .where(Card.卡状态.in_(['正常','临期']))\
+            .where(Card.车牌号码.notin_(expired))
+            result = session.execute(stmt).all()
             
-            free_h = date.get_free_hours_between(start_dt,end_dt)
+            for r in result:
 
-            hours = get_parked_hours_between(car_no,start_dt,end_dt)
-            
-            diff = datetime.today() - datetime.strptime(end_dt,date.YMD)
+                car_no = r[0]
+                start_dt = r[1]
+                end_dt = r[2]
+                # free_h = r[3]
+                
+                free_h = date.get_free_hours_between(start_dt,end_dt)
 
-            if(diff.days > 0):
-                stmt = update(Card).where(Card.车牌号码 == car_no).values({
-                    '卡状态':'过期'
-                })
-                session.execute(stmt)
-            ## plus the existing ot_record hours
-            sum_ot_record_hours = ot_record(car_no)
-            hours = hours + sum_ot_record_hours
+                hours = get_parked_hours_between(car_no,start_dt,end_dt)
+                
+                diff = datetime.today() - datetime.strptime(end_dt,date.YMD)
 
-            ot = 0
+                if(diff.days > 0):
+                    stmt = update(Card).where(Card.车牌号码 == car_no).values({
+                        '卡状态':'过期'
+                    })
+                    session.execute(stmt)
+                ## plus the existing ot_record hours
+                sum_ot_record_hours = ot_record(car_no)
+                hours = hours + sum_ot_record_hours
 
-            
-            if hours > free_h:
-                ot = hours - free_h
+                ot = 0
 
-            if ot > 0 :
-                update_card_res_rowcount = expire_card(car_no=car_no,hours=hours,overtime=ot,free_h=free_h)
-                if update_card_res_rowcount > 0 and sum_ot_record_hours > 0:
+                
+                if hours > free_h:
+                    ot = hours - free_h
 
-                    ## update the existing record in CarParkingOT to mark it as removed
-                    remove_ot_record(car_no=car_no)
-                  
-                    update_ot_res = session.execute(stmt)
-                    if update_ot_res.rowcount > 0:
-                        print(f'车牌号:{car_no}，超时记录已移除')
+                if ot > 0 :
+                    update_card_res_rowcount = expire_card(car_no=car_no,hours=hours,overtime=ot,free_h=free_h)
+                    if update_card_res_rowcount > 0 and sum_ot_record_hours > 0:
+
+                        ## update the existing record in CarParkingOT to mark it as removed
+                        remove_res_rowcount = remove_ot_record(car_no=car_no)
+                    
+
+                        if  remove_res_rowcount > 0:
+                            print(f'车牌号:{car_no}，超时记录已移除')
                         ## add new record
                         add_or_update_ot_record(car_no,ot)
 
-                    
-        session.commit()
+                        
+            session.commit()
+       
 
-        stmt = select(Card).where(Card.超时小时 > 0)\
-        .where(Card.车牌号码.notin_(expired))
-        df = pd.read_sql_query(stmt,con=engine)
 
-        if len(df) > 0:
-            df.to_excel(f'{card.get_project_root()}/{datetime.now().strftime("%Y-%m-%d")}#超时转临停车辆.xlsx',index=False)
-        
-    
+            stmt = select(Card).where(Card.超时小时 > 0)\
+            .where(Card.车牌号码.notin_(expired))
+            df = pd.read_sql_query(stmt,con=engine)
+
+            if len(df) > 0:
+                df.to_excel(f'{card.get_project_root()}/{datetime.now().strftime("%Y-%m-%d")}#超时转临停车辆.xlsx',index=False)
+            
+        except Exception as e:
+            print(e)
+            session.rollback()
     
 
 def get_parked_hours_between(car_no,start_dt,end_dt):
