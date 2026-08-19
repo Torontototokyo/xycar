@@ -119,6 +119,8 @@ class Card(Base):          # Example for your previous Chinese column names
     总免费停车时长: Mapped[int] = mapped_column(Integer,nullable=True)
     实际停车时长: Mapped[float] = mapped_column(Float,nullable=True)
     超时小时: Mapped[float] = mapped_column(Float,nullable=True)
+    created_at:Mapped[datetime] = mapped_column(String(200),nullable=True)
+    updated_at:Mapped[datetime] = mapped_column(String(200),nullable=True)
 
 def init_engine():
     DB_USER = 'root'
@@ -491,8 +493,11 @@ def import_car_cards(df:pd.DataFrame):
                 
             values['总免费停车时长'] = hours
             if existing_id is None:
+                values['created_at'] = datetime.now()
+                values['updated_at'] = datetime.now()
                 session.execute(insert(Card).values(**values))
             else:
+                values['updated_at'] = datetime.now()
                 session.execute(update(Card).where(Card.id == existing_id).values(**values))
 
 
