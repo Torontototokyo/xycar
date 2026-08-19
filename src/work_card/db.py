@@ -411,7 +411,8 @@ def expire_card(car_no:str,hours:float,overtime:float,free_h:float)->int:
                     '实际停车时长':hours,
                     '超时小时':overtime,
                     '总免费停车时长':free_h,
-                    '卡状态':'过期'
+                    '卡状态':'过期',
+                    'updated_at':datetime.now().strftime(date.FM_YMDT)
                 })
         update_card_res = session.execute(stmt) 
         session.commit()
@@ -507,8 +508,10 @@ def update_card_parking_time():
 
                 if ot > 0 :
                     update_card_res_rowcount = expire_card(car_no=car_no,hours=hours,overtime=ot,free_h=free_h)
+                    if  update_card_res_rowcount > 0:
+                        add_or_update_ot_record(car_no=car_no,hours=ot)
                     if update_card_res_rowcount > 0 and sum_ot_record_hours > 0:
-
+                        
                         ## update the existing record in CarParkingOT to mark it as removed
                         remove_res_rowcount = remove_ot_record(car_no=car_no)
                     
@@ -516,7 +519,7 @@ def update_card_parking_time():
                         if  remove_res_rowcount > 0:
                             print(f'车牌号:{car_no}，超时记录已移除')
                         ## add new record
-                        add_or_update_ot_record(car_no,ot)
+                       
 
                         
             session.commit()
