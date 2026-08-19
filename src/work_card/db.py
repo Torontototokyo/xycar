@@ -386,7 +386,19 @@ def sum_logs(car_no,start_dt,end_dt)->float:
  
 
     return r or 0
-    
+
+def ot_record(car_no:str)->float:
+
+    engine = init_engine()
+
+    with Session(engine) as session:
+
+        stmt = select(func.sum(CarParkingOT.hours))\
+        .where(CarParkingOT.car_no == car_no)\
+        .where(CarParkingOT.removed_at == None)
+
+        sum_hours = session.scalar(stmt)
+        return sum_hours or 0
 
 def update_card_parking_time():
 
@@ -420,7 +432,9 @@ def update_card_parking_time():
                     '卡状态':'过期'
                 })
                 session.execute(stmt)
-            ot = 0
+            ot = 0 + ot_record(car_no)
+
+            
             if hours > free_h:
                 ot = hours - free_h
 

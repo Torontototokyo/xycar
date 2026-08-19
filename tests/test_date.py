@@ -1,4 +1,5 @@
 from work_card import date as dt
+from work_card.db import ot_record
 
 def test_get_free_hours_between():
     r = dt.get_free_hours_between('2026-06-10','2026-08-09')
@@ -54,3 +55,11 @@ def test_seperate_date_into_months():
     r = dt.seperate_date_into_months(start_date='2025-11-03',end_date='2025-11-30')
 
     assert r == [['2025-11-03', '2025-11-30']]
+
+
+def test_ot_record():
+
+    car_no = '川-GRT678'
+    r = ot_record(car_no)
+
+    assert r == 45.57
