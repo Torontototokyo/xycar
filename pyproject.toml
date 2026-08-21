@@ -1,0 +1,16 @@
+# pyproject.toml
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "my-parking-project"
+version = "1.0.0"
+dependencies = [
+    "sqlalchemy",
+    "pymysql",
+]
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+packages = ["work_card", "temp1"]

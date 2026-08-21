@@ -5,12 +5,12 @@ from sqlalchemy.orm import Session,DeclarativeBase,mapped_column,relationship,Ma
 from sqlalchemy import insert,update,String
 from sqlalchemy.sql import func
 from sqlalchemy.exc import MultipleResultsFound
-import date as date
+import work_card.date as date
 from dateutil.relativedelta import relativedelta
 import pandas as pd
-import card as card
+import work_card.card as card
 import numpy as np
-import utils as utils
+import work_card.utils as utils
 
 
 class Base(DeclarativeBase):
@@ -136,6 +136,20 @@ def init_engine():
 
     return engine
 
+
+def init_engine_sql():
+    DB_USER = 'root'
+    DB_PASSWORD = 'root'
+    DB_HOST = 'localhost'      # or IP address
+    DB_PORT = 3306
+    DB_NAME = 'sys'
+    engine = create_engine(
+        f"mysql+pymysql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}",
+        pool_pre_ping=True,        # Helps with stale connections
+        echo=False                 # Set True for debugging SQL
+    )
+
+    return engine
 
 
 
@@ -400,18 +414,19 @@ def ot_record(car_no:str)->float:
         sum_hours = session.scalar(stmt)
         return sum_hours or 0
 
-def expire_card(car_no:str,hours:float,overtime:float,free_h:float)->int:
+def expire_card(car_no:str,hours:float,overtime:float,free_h:float,car_state:str='过期')->int:
     engine = init_engine()
     
     with Session(engine) as session:
 
         stmt = update(Card).where(Card.车牌号码 == car_no)\
-                .where(Card.卡状态 != '过期')\
+                .where(Card.卡状态.in_(['正常','临期']))\
+                .with_hint('FORCE INDEX (idx_卡状态_车牌号码)',Card)\
                 .values({
                     '实际停车时长':hours,
                     '超时小时':overtime,
                     '总免费停车时长':free_h,
-                    '卡状态':'过期',
+                    '卡状态':car_state,
                     'updated_at':datetime.now().strftime(date.FM_YMDT)
                 })
         update_card_res = session.execute(stmt) 
@@ -475,7 +490,7 @@ def update_card_parking_time():
             expired = card.get_expired()
             stmt = select(Card.车牌号码,Card.开始期限,Card.截止期限,Card.总免费停车时长)\
             .where(Card.卡状态.in_(['正常','临期']))\
-            .where(Card.车牌号码.notin_(expired))
+            # .where(Card.车牌号码.notin_(expired))
             result = session.execute(stmt).all()
             
             for r in result:
@@ -505,7 +520,7 @@ def update_card_parking_time():
                 
                 if hours > free_h:
                     ot = hours - free_h
-
+                
                 if ot > 0 :
                     update_card_res_rowcount = expire_card(car_no=car_no,hours=hours,overtime=ot,free_h=free_h)
                     if  update_card_res_rowcount > 0:
@@ -519,10 +534,11 @@ def update_card_parking_time():
                         if  remove_res_rowcount > 0:
                             print(f'车牌号:{car_no}，超时记录已移除')
                         ## add new record
-                       
+                else:
+                    update_card_res_rowcount = expire_card(car_no=car_no,hours=hours,overtime=0,free_h=free_h,car_state='正常')
 
                         
-            session.commit()
+                session.commit()
        
 
 
@@ -535,6 +551,7 @@ def update_card_parking_time():
             
         except Exception as e:
             print(e)
+
             session.rollback()
     
 
@@ -576,14 +593,17 @@ def import_car_cards(df:pd.DataFrame):
 
         for _, row in df.iterrows():
             car_no = row['车牌号码']
-            stmt = select(Card.id).where(Card.车牌号码 == car_no)
+            start_dt = row['开始期限']
+            end_dt = row['截止期限']
+            stmt = select(Card.id).where(Card.车牌号码 == car_no)\
+            .where(Card.开始期限 == start_dt)\
+            .where(Card.截止期限 == end_dt)
 
             existing_id = session.execute(stmt).scalar_one_or_none()
            
             values = row.to_dict()
 
-            start_dt = row['开始期限']
-            end_dt = row['截止期限']
+           
             hours = date.get_free_hours_between(start_dt,end_dt)
                 
             values['总免费停车时长'] = hours
