@@ -11,7 +11,23 @@ import pandas as pd
 import work_card.card as card
 import numpy as np
 import work_card.utils as utils
+import logging
+# logging.basicConfig()
+# logging.getLogger('sqlalchemy.engine').setLevel(logging.INFO)
+# logging.getLogger('sqlalchemy.orm').setLevel(logging.INFO)
+def init_engine():
+    DB_USER = 'root'
+    DB_PASSWORD = 'root'
+    DB_HOST = 'localhost'      # or IP address
+    DB_PORT = 3306
+    DB_NAME = 'cars_db'
+    engine = create_engine(
+        f"mysql+pymysql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}",
+        pool_pre_ping=True,        # Helps with stale connections
+        echo=False,                # Set True for debugging SQL
+    )
 
+    return engine
 
 class Base(DeclarativeBase):
     pass
@@ -122,19 +138,7 @@ class Card(Base):          # Example for your previous Chinese column names
     created_at:Mapped[datetime] = mapped_column(String(200),nullable=True)
     updated_at:Mapped[datetime] = mapped_column(String(200),nullable=True)
 
-def init_engine():
-    DB_USER = 'root'
-    DB_PASSWORD = 'root'
-    DB_HOST = 'localhost'      # or IP address
-    DB_PORT = 3306
-    DB_NAME = 'cars_db'
-    engine = create_engine(
-        f"mysql+pymysql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}",
-        pool_pre_ping=True,        # Helps with stale connections
-        echo=False                 # Set True for debugging SQL
-    )
 
-    return engine
 
 
 def init_engine_sql():
@@ -414,52 +418,46 @@ def ot_record(car_no:str)->float:
         sum_hours = session.scalar(stmt)
         return sum_hours or 0
 
-def expire_card(car_no:str,hours:float,overtime:float,free_h:float,car_state:str='过期')->int:
-    engine = init_engine()
-    
-    with Session(engine) as session:
+def expire_card(session:Session,car_no:str,hours:float,overtime:float,free_h:float,car_state:str='过期')->int:
 
-        stmt = update(Card).where(Card.车牌号码 == car_no)\
-                .where(Card.卡状态.in_(['正常','临期']))\
-                .with_hint('FORCE INDEX (idx_卡状态_车牌号码)',Card)\
-                .values({
-                    '实际停车时长':hours,
-                    '超时小时':overtime,
-                    '总免费停车时长':free_h,
-                    '卡状态':car_state,
-                    'updated_at':datetime.now().strftime(date.FM_YMDT)
-                })
-        update_card_res = session.execute(stmt) 
-        session.commit()
-        return update_card_res.rowcount
-def add_or_update_ot_record(car_no:str,hours:float):
+    stmt = update(Card).where(Card.车牌号码 == car_no)\
+            .where(Card.卡状态.in_(['正常','临期']))\
+            .with_hint('FORCE INDEX (idx_卡状态_车牌号码)',Card)\
+            .values({
+                '实际停车时长':hours,
+                '超时小时':overtime,
+                '总免费停车时长':free_h,
+                '卡状态':car_state,
+                'updated_at':datetime.now().strftime(date.FM_YMDT)
+            })
+    update_card_res = session.execute(stmt) 
+    return update_card_res.rowcount
+def add_or_update_ot_record(session:Session,car_no:str,hours:float):
 
-    engine = init_engine()
     now = datetime.now().strftime(date.FM_YMDT)
     today = datetime.now().strftime(date.YMD)
-    with Session(engine) as session:
 
-        ## if today ot_record exist
-        stmt = select(CarParkingOT).where(CarParkingOT.car_no == car_no)\
-            .where(CarParkingOT.removed_at == None)\
-            .where(CarParkingOT.arose_at == today)
+    ## if today ot_record exist
+    stmt = select(CarParkingOT).where(CarParkingOT.car_no == car_no)\
+        .where(CarParkingOT.removed_at == None)\
+        .where(CarParkingOT.arose_at == today)
 
-        first = session.execute(stmt).scalar_one_or_none()
-        
-        if first:
-            update(CarParkingOT).where(CarParkingOT.id == first.id)\
-            .values({hours:hours})
-        else:
-            stmt = insert(CarParkingOT).values(
-                car_no=car_no,
-                hours=hours,
-                arose_at=today,
-                created_at=now,
-                updated_at=now
-            )
-            session.execute(stmt)
+    first = session.execute(stmt).scalar_one_or_none()
+    
+    if first:
+        update(CarParkingOT).where(CarParkingOT.id == first.id)\
+        .values({hours:hours})
+    else:
+        stmt = insert(CarParkingOT).values(
+            car_no=car_no,
+            hours=hours,
+            arose_at=today,
+            created_at=now,
+            updated_at=now
+        )
+        session.execute(stmt)
 
-        session.commit()
+   
 
 def remove_ot_record(car_no:str)->int:
 
@@ -522,9 +520,9 @@ def update_card_parking_time():
                     ot = hours - free_h
                 
                 if ot > 0 :
-                    update_card_res_rowcount = expire_card(car_no=car_no,hours=hours,overtime=ot,free_h=free_h)
+                    update_card_res_rowcount = expire_card(session=session,car_no=car_no,hours=hours,overtime=ot,free_h=free_h)
                     if  update_card_res_rowcount > 0:
-                        add_or_update_ot_record(car_no=car_no,hours=ot)
+                        add_or_update_ot_record(session=session,car_no=car_no,hours=ot)
                     if update_card_res_rowcount > 0 and sum_ot_record_hours > 0:
                         
                         ## update the existing record in CarParkingOT to mark it as removed
@@ -535,10 +533,10 @@ def update_card_parking_time():
                             print(f'车牌号:{car_no}，超时记录已移除')
                         ## add new record
                 else:
-                    update_card_res_rowcount = expire_card(car_no=car_no,hours=hours,overtime=0,free_h=free_h,car_state='正常')
+                    update_card_res_rowcount = expire_card(session=session,car_no=car_no,hours=hours,overtime=0,free_h=free_h,car_state='正常')
 
                         
-                session.commit()
+            session.commit()
        
 
 
