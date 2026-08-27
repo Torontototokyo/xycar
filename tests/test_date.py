@@ -14,6 +14,9 @@ def test_get_free_hours_between():
     r = dt.get_free_hours_between('2026-06-10','2026-08-17')
     assert r == 816
 
+    r = dt.get_free_hours_between('2026-03-12','2026-10-08')
+    assert r == 816
+
 
 def test_recursive_count_months():
     r = dt.recursive_count_months('2026-06-10','2026-08-09')
