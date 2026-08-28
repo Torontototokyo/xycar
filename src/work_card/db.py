@@ -405,18 +405,16 @@ def sum_logs(car_no,start_dt,end_dt)->float:
 
     return r or 0
 
-def ot_record(car_no:str)->float:
+def ot_record(car_no:str,session:Session)->float:
 
-    engine = init_engine()
 
-    with Session(engine) as session:
 
-        stmt = select(func.sum(CarParkingOT.hours))\
-        .where(CarParkingOT.car_no == car_no)\
-        .where(CarParkingOT.removed_at == None)
+    stmt = select(func.sum(CarParkingOT.hours))\
+    .where(CarParkingOT.car_no == car_no)\
+    .where(CarParkingOT.removed_at == None)
 
-        sum_hours = session.scalar(stmt)
-        return sum_hours or 0
+    sum_hours = session.scalar(stmt)
+    return sum_hours or 0
 
 def expire_card(session:Session,car_no:str,hours:float,overtime:float,free_h:float,car_state:str='过期')->int:
 
@@ -459,22 +457,17 @@ def add_or_update_ot_record(session:Session,car_no:str,hours:float):
 
    
 
-def remove_ot_record(car_no:str)->int:
+def remove_ot_record(car_no:str,session:Session)->int:
 
-    engine = init_engine()
+    stmt = update(CarParkingOT).where(CarParkingOT.car_no == car_no)\
+                    .where(CarParkingOT.removed_at == None)\
+                    .values({
+                        'removed_at':datetime.now().strftime(date.YMD)
+                    })
 
-    with Session(engine) as session:
+    res = session.execute(stmt)
 
-        stmt = update(CarParkingOT).where(CarParkingOT.car_no == car_no)\
-                        .where(CarParkingOT.removed_at == None)\
-                        .values({
-                            'removed_at':datetime.now().strftime(date.YMD)
-                        })
-
-        res = session.execute(stmt)
-
-        session.commit()
-        return res.rowcount
+    return res.rowcount
 
 def update_card_parking_time():
 
@@ -510,7 +503,7 @@ def update_card_parking_time():
                     })
                     session.execute(stmt)
                 ## plus the existing ot_record hours
-                sum_ot_record_hours = ot_record(car_no)
+                sum_ot_record_hours = ot_record(car_no,session=session)
                 hours = hours + sum_ot_record_hours
 
                 ot = 0
@@ -526,7 +519,7 @@ def update_card_parking_time():
                     if update_card_res_rowcount > 0 and sum_ot_record_hours > 0:
                         
                         ## update the existing record in CarParkingOT to mark it as removed
-                        remove_res_rowcount = remove_ot_record(car_no=car_no)
+                        remove_res_rowcount = remove_ot_record(car_no=car_no,session=session)
                     
 
                         if  remove_res_rowcount > 0:
