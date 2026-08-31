@@ -25,6 +25,7 @@ def init_engine():
         f"mysql+pymysql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}",
         pool_pre_ping=True,        # Helps with stale connections
         echo=False,                # Set True for debugging SQL
+        # logging_name=logging
     )
 
     return engine
@@ -394,7 +395,7 @@ def sum_logs(car_no,start_dt,end_dt)->float:
     with Session(engine) as session:
 
         stmt = select(func.sum(Logs.停车时长A小时Z))\
-        .where(Logs.入场时间 > start_dt)\
+        .where(Logs.入场时间 >= start_dt)\
         .where(Logs.出场时间 < end_dt)\
         .where(Logs.车牌号码.in_(car_nos))
 
@@ -403,7 +404,7 @@ def sum_logs(car_no,start_dt,end_dt)->float:
         # print(stmt,f'start_dt:{start_dt},end_dt:{end_dt},r:{r}')
  
 
-    return r or 0
+    return round(r,2) or 0
 
 def ot_record(car_no:str,session:Session)->float:
 

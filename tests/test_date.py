@@ -1,5 +1,6 @@
 from work_card import date as dt
-from work_card.db import ot_record
+from work_card.db import ot_record,init_engine
+from sqlalchemy.orm import Session
 
 def test_get_free_hours_between():
     r = dt.get_free_hours_between('2026-06-10','2026-08-09')
@@ -15,7 +16,7 @@ def test_get_free_hours_between():
     assert r == 816
 
     r = dt.get_free_hours_between('2026-03-12','2026-10-08')
-    assert r == 816
+    assert r == 1896
 
 
 def test_recursive_count_months():
@@ -63,6 +64,8 @@ def test_seperate_date_into_months():
 def test_ot_record():
 
     car_no = '川-GRT678'
-    r = ot_record(car_no)
+
+    engine = init_engine()
+    r = ot_record(car_no,session=Session(engine))
 
     assert r == 45.57
