@@ -25,7 +25,7 @@ def init_engine():
         f"mysql+pymysql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}",
         pool_pre_ping=True,        # Helps with stale connections
         echo=False,                # Set True for debugging SQL
-        # logging_name=logging
+        logging_name=None
     )
 
     return engine
@@ -404,7 +404,7 @@ def sum_logs(car_no,start_dt,end_dt)->float:
         # print(stmt,f'start_dt:{start_dt},end_dt:{end_dt},r:{r}')
  
 
-    return round(r,2) or 0
+    return r or 0
 
 def ot_record(car_no:str,session:Session)->float:
 
@@ -482,8 +482,10 @@ def update_card_parking_time():
             expired = card.get_expired()
             stmt = select(Card.车牌号码,Card.开始期限,Card.截止期限,Card.总免费停车时长)\
             .where(Card.卡状态.in_(['正常','临期']))\
+            .where(Card.车牌号码 == '粤-EX316D')
             # .where(Card.车牌号码.notin_(expired))
             result = session.execute(stmt).all()
+
             
             for r in result:
 
@@ -497,6 +499,7 @@ def update_card_parking_time():
                 hours = get_parked_hours_between(car_no,start_dt,end_dt)
                 
                 diff = datetime.today() - datetime.strptime(end_dt,date.YMD)
+
 
                 if(diff.days > 0):
                     stmt = update(Card).where(Card.车牌号码 == car_no).values({
