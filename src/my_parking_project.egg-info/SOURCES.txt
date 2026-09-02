@@ -1,3 +1,4 @@
+README.md
 pyproject.toml
 src/my_parking_project.egg-info/PKG-INFO
 src/my_parking_project.egg-info/SOURCES.txt
