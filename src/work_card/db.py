@@ -2,7 +2,7 @@ from datetime import datetime
 from sqlalchemy import create_engine,MetaData,select,Column,Table,DateTime as DT
 from sqlalchemy.types import Integer, Float, Text, DateTime,DECIMAL
 from sqlalchemy.orm import Session,DeclarativeBase,mapped_column,relationship,Mapped
-from sqlalchemy import insert,update,String
+from sqlalchemy import insert,update,String,Engine
 from sqlalchemy.sql import func
 from sqlalchemy.exc import MultipleResultsFound
 import work_card.date as date
@@ -12,15 +12,42 @@ import work_card.card as card
 import numpy as np
 import work_card.utils as utils
 import logging
+
+class DbConf:
+
+
+    def __init__(self,user:str,password:str,address:str,port:int,db_name:str) -> None:
+        
+        self.user = user
+        self.password = password
+        self.address = address
+        self.port = port
+        self.db_name = db_name
+    
+    
+    
 # logging.basicConfig()
 # logging.getLogger('sqlalchemy.engine').setLevel(logging.INFO)
 # logging.getLogger('sqlalchemy.orm').setLevel(logging.INFO)
-def init_engine():
-    DB_USER = 'root'
-    DB_PASSWORD = 'root'
-    DB_HOST = 'localhost'      # or IP address
-    DB_PORT = 3306
-    DB_NAME = 'cars_db'
+def init_engine(db_conf: DbConf)-> Engine:
+    DB_USER = db_conf.user
+    DB_PASSWORD = db_conf.password
+    DB_HOST = db_conf.address
+    DB_PORT = db_conf.port
+    DB_NAME = db_conf.db_name
+    engine = create_engine(
+        f"mysql+pymysql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}",
+        pool_pre_ping=True,        # Helps with stale connections
+        echo=False,                # Set True for debugging SQL
+        logging_name=None
+    )
+
+    return engine
+    DB_USER = str_user
+    DB_PASSWORD = str_password
+    DB_HOST = str_address
+    DB_PORT = int_port
+    DB_NAME = str_db_name
     engine = create_engine(
         f"mysql+pymysql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}",
         pool_pre_ping=True,        # Helps with stale connections
@@ -317,9 +344,8 @@ def add_or_insert_car_leave_log_summery_by_month(car_no:str,hours:float,start_dt
 
 
 
-def update_or_insert_car_leave_log_summery_by_month(car_no:str,start_dt):
+def update_or_insert_car_leave_log_summery_by_month(car_no:str,start_dt,engine:Engine):
     
-    engine = init_engine()
 
     with Session(engine) as session:
         
@@ -337,7 +363,7 @@ def update_or_insert_car_leave_log_summery_by_month(car_no:str,start_dt):
 
         end_dt = date.last_day_of_month(datetime.strptime(start_dt, date.YMD)).strftime(date.YMD)
         # print(f'car_no:{car_no},start_dt:{start_dt},{type(start_dt)},end_dt:{end_dt}')
-        hours = sum_logs(car_no,start_dt,end_dt)
+        hours = sum_logs(car_no,start_dt,end_dt,engine)
 
         if r is None:
             
@@ -353,8 +379,7 @@ def update_or_insert_car_leave_log_summery_by_month(car_no:str,start_dt):
             session.commit()
 
 
-def summary_hour(car_no,date)->float:
-    engine = init_engine()
+def summary_hour(car_no,date,engine:Engine)->float:
     car_nos = []
     if "," in car_no:
         car_nos = car_no.split(",")
@@ -369,7 +394,7 @@ def summary_hour(car_no,date)->float:
     return h or 0
 
 
-def sum_logs(car_no,start_dt,end_dt)->float:
+def sum_logs(car_no,start_dt,end_dt,engine:Engine)->float:
 
     car_nos = []
     if "," in car_no:
@@ -390,7 +415,6 @@ def sum_logs(car_no,start_dt,end_dt)->float:
     
     end_dt = end_dt.date()
    
-    engine = init_engine()
 
     with Session(engine) as session:
 
@@ -470,11 +494,10 @@ def remove_ot_record(car_no:str,session:Session)->int:
 
     return res.rowcount
 
-def update_card_parking_time():
+def update_card_parking_time(engine:Engine):
 
     
     # table = get_cards_table(metadata=MetaData())
-    engine = init_engine()
 
     with Session(engine) as session:
         try:
@@ -496,7 +519,7 @@ def update_card_parking_time():
                 
                 free_h = date.get_free_hours_between(start_dt,end_dt)
 
-                hours = get_parked_hours_between(car_no,start_dt,end_dt)
+                hours = get_parked_hours_between(car_no,start_dt,end_dt,engine)
                 
                 diff = datetime.today() - datetime.strptime(end_dt,date.YMD)
 
@@ -550,7 +573,7 @@ def update_card_parking_time():
             session.rollback()
     
 
-def get_parked_hours_between(car_no,start_dt,end_dt):
+def get_parked_hours_between(car_no,start_dt,end_dt,engine:Engine)->float:
     
     first_date_last_6_month = date.get_first_day_last_6_months(start_dt)
     if (datetime.strptime(first_date_last_6_month,date.YMD) - datetime.strptime(start_dt,date.YMD)).days > 0:
@@ -571,15 +594,14 @@ def get_parked_hours_between(car_no,start_dt,end_dt):
 
         else:
            
-            hours += summary_hour(car_no,i)
+            hours += summary_hour(car_no,i,engine)
     # print(car_no,start_dt,hours)
     return hours
 
 
-def import_car_cards(df:pd.DataFrame):
+def import_car_cards(df:pd.DataFrame,engine:Engine):
 
     # table = get_cards_table(metadata=MetaData())
-    engine = init_engine()
     df = df[df['卡状态'].isin(['正常','过期'])]
     df = df[df['套餐名称'] == '工作卡']
 
@@ -615,10 +637,7 @@ def import_car_cards(df:pd.DataFrame):
         session.commit()
 
 
-def import_logs(df:pd.DataFrame):
-
-    engine = init_engine()
-
+def import_logs(df:pd.DataFrame,engine:Engine):
 
     df = df.replace({np.nan: None})
 
@@ -690,8 +709,8 @@ def import_logs(df:pd.DataFrame):
                         session.commit()
                         q1_start_dt = datetime.strptime(str(q1['入场时间']),date.FM_YMDT).replace(day=1).strftime(date.YMD)
                         q2_start_dt = datetime.strptime(str(q2['入场时间']),date.FM_YMDT).replace(day=1).strftime(date.YMD)
-                        update_or_insert_car_leave_log_summery_by_month(car_no,q1_start_dt)
-                        update_or_insert_car_leave_log_summery_by_month(car_no,q2_start_dt)
+                        update_or_insert_car_leave_log_summery_by_month(car_no,q1_start_dt,engine)
+                        update_or_insert_car_leave_log_summery_by_month(car_no,q2_start_dt,engine)
                     else:
 
 
@@ -703,18 +722,17 @@ def import_logs(df:pd.DataFrame):
                         session.execute(insert(Logs).values(**values))
                         session.commit()
                         start_dt = datetime.strptime(str(row['入场时间']),date.FM_YMDT).replace(day=1).strftime(date.YMD)
-                        update_or_insert_car_leave_log_summery_by_month(car_no,start_dt)
+                        update_or_insert_car_leave_log_summery_by_month(car_no,start_dt,engine)
 
         except Exception as e:
             print(f"Error occurred: {e}")
             session.rollback()
             raise
-def update_summary_logs():
-    pass
 
 
-engine = init_engine()
-Base.metadata.create_all(engine)
+
+# engine = init_engine()
+# Base.metadata.create_all(engine)
 
 
 
