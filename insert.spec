@@ -5,13 +5,11 @@ a = Analysis(
     ['src/work_card/insert.py'],
     pathex=[],
     binaries=[],
-    datas=[],
+    datas=[('src/work_card/*.py', 'work_card')],
     hiddenimports=[
         'sqlalchemy',
         'pymysql',
-        'pandas',
-        
-        ],
+        'pandas'],
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
