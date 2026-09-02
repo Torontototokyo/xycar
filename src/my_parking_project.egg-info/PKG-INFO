@@ -3,3 +3,4 @@ Name: my-parking-project
 Version: 1.0.0
 Requires-Dist: sqlalchemy
 Requires-Dist: pymysql
+Requires-Dist: pandas
