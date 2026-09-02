@@ -1,0 +1,50 @@
+# .github/workflows/build-windows.yml
+name: Build Windows EXE with PyInstaller
+
+on:
+  # 当代码被推送到 main 分支时触发
+  push:
+    branches: [ "main" ]
+  # 允许你从 GitHub 的 Actions 选项卡手动触发这个工作流
+  workflow_dispatch:
+
+jobs:
+  build:
+    # 指定运行环境为最新版的 Windows
+    runs-on: windows-latest
+    steps:
+      # 1. 拉取你的代码仓库
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # 2. 设置 Python 环境
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          # 指定你要使用的 Python 版本
+          python-version: '3.8.20'
+
+      # 3. 安装项目依赖和 PyInstaller
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          # 如果你的项目有 requirements.txt，这行会安装所有依赖
+          pip install -r requirements.txt
+          # 安装 PyInstaller
+          pip install pyinstaller
+
+      # 4. 使用 PyInstaller 打包成单个 .exe 文件
+      - name: Build with PyInstaller
+        run: |
+          # --onefile: 打包成单个文件
+          # --noconsole: 如果你的程序有 GUI (如 tkinter, PyQt)，加上这个可以隐藏命令行窗口
+          pyinstaller --onefile --name "update db" insert.py
+
+      # 5. 将生成的 .exe 文件上传为 Artifact，方便下载
+      - name: Upload Windows EXE as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          # Artifact 的名称，下载时会是一个 zip 包
+          name: windows-exe
+          # 上传 dist 文件夹下所有 .exe 文件
+          path: dist/*.exe
