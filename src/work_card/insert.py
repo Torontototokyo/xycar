@@ -1,6 +1,6 @@
 import argparse
 import pandas as pd
-import db
+import work_card.db as db
 
 
 
