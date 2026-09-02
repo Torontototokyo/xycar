@@ -7,6 +7,8 @@ on:
     branches: [ "main" ]
   # 允许你从 GitHub 的 Actions 选项卡手动触发这个工作流
   workflow_dispatch:
+  release:
+    types: [published]
 
 jobs:
   build:
@@ -22,7 +24,7 @@ jobs:
         uses: actions/setup-python@v5
         with:
           # 指定你要使用的 Python 版本
-          python-version: '3.8.20'
+          python-version: '3.8'
 
       # 3. 安装项目依赖和 PyInstaller
       - name: Install dependencies
@@ -38,7 +40,7 @@ jobs:
         run: |
           # --onefile: 打包成单个文件
           # --noconsole: 如果你的程序有 GUI (如 tkinter, PyQt)，加上这个可以隐藏命令行窗口
-          pyinstaller --onefile --name "update-db" insert.py
+          pyinstaller --onefile --name "update db" src/work_card/insert.py
 
       # 5. 将生成的 .exe 文件上传为 Artifact，方便下载
       - name: Upload Windows EXE as artifact

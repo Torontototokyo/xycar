@@ -7,6 +7,8 @@ on:
     branches: [ "main" ]
   # 允许你从 GitHub 的 Actions 选项卡手动触发这个工作流
   workflow_dispatch:
+  release:
+    types: [published]
 
 jobs:
   build:
@@ -48,3 +50,24 @@ jobs:
           name: windows-exe
           # 上传 dist 文件夹下所有 .exe 文件
           path: dist/*.exe
+  publish:
+    # 这个任务依赖于 build 任务成功完成
+    needs: build
+    # 只有当我们通过 release 事件触发时，才运行这个任务
+    if: github.event_name == 'release'
+    runs-on: ubuntu-latest  # 下载和上传任务在 ubuntu 上执行更快
+    permissions:
+      contents: write       # 必须授予写入权限，才能上传附件到 Release
+    steps:
+      # 第一步：下载由 build 任务上传的 .exe 文件
+      - name: Download built EXE
+        uses: actions/download-artifact@v4
+        with:
+          name: windows-exe
+          path: ./artifacts
+
+      # 第二步：将下载的 .exe 文件上传到触发工作流的 Release
+      - name: Upload EXE to Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ./artifacts/*.exe
