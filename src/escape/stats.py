@@ -1,7 +1,7 @@
 import argparse
 import pandas as pd
 import work_card.utils as utils
-from datetime import datetime
+import math
 class Conf:
     free_hour:float
     fee_per_hour:float
@@ -34,10 +34,10 @@ def compute(hours,conf:Conf)->float:
     elif hours > 24:
         quotient = hours // 24  # INT(N966/24)
         remainder = hours - (quotient * 24)  # (N966/24 - INT(N966/24)) * 24
-        remainder_value = remainder * conf.fee_per_hour
+        remainder_value = math.ceil(remainder) * conf.fee_per_hour
         return (quotient * conf.max_fee) + (conf.max_fee if remainder_value >= conf.max_fee else remainder_value)
     else:
-        value = hours * conf.fee_per_hour
+        value = math.ceil(hours) * conf.fee_per_hour
         return conf.max_fee if value >= conf.max_fee else value
 
 def hanledf(df):
@@ -60,6 +60,9 @@ def hanledf(df):
     conf = get_conf(p_name=p_name)
 
     total_fee = 0    
+
+    df = df[df['出场通道'].notnull()]
+    df = df[df['出场通道'].str.contains('出口')]
 
     df = df.assign(
         停车时长小时=lambda x: x['停车时长'].apply(utils.chinese_duration_to_hours),
