@@ -1,4 +1,4 @@
-from sms import Sample
+from work_card.sms import Sample
 import argparse
 import pandas as pd
 def main():
