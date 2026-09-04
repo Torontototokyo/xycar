@@ -17,8 +17,8 @@ from alibabacloud_tea_util.client import Client as UtilClient
 
 load_dotenv()
 
-ACCESS_KEY_ID:str = os.getenv("ACCESS-KEY-ID")
-ACCESS_KEY_SECRET:str = os.getenv("ACCESS-KEY-SECRET")
+ACCESS_KEY_ID:str = os.getenv("ACCESS_KEY_ID")
+ACCESS_KEY_SECRET:str = os.getenv("ACCESS_KEY_SECRET")
 TEMPLATE_CODE:str = os.getenv("TEMPLATE_CODE")
 SIGN_NAME:str =os.getenv("SIGN_NAME")
 class Sample:
