@@ -1,3 +1,11 @@
 Metadata-Version: 2.1
 Name: my-parking-project
 Version: 1.0.0
+Requires-Dist: sqlalchemy
+Requires-Dist: pymysql
+Requires-Dist: pandas
+Requires-Dist: openpyxl
+Requires-Dist: alibabacloud_tea_util
+Requires-Dist: alibabacloud_dysmsapi20170525
+Requires-Dist: alibabacloud_tea_openapi
+Requires-Dist: alibabacloud_credentials

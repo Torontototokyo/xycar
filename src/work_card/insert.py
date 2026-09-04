@@ -7,13 +7,13 @@ import work_card.db as db
 def main():
     parser = argparse.ArgumentParser(description="Import card and log Excel files")
     parser.add_argument('-c', '--cards', dest='card_excel', help='path to cards excel file', default=None)
-    parser.add_argument('-l', '--logs', dest='logs_excel', help='path to logs excel file', default=None)
-    parser.add_argument('-p', '--port', dest='db_port', help='path to logs excel file', default=None)
-    parser.add_argument('-u', '--user', dest='db_user', help='path to logs excel file', default=None)
-    parser.add_argument('-a', '--address', dest='address', help='path to logs excel file', default=None)
-    parser.add_argument('-P', '--password', dest='password', help='path to logs excel file', default=None)
-    parser.add_argument('-N', '--db-name', dest='db_name', help='path to logs excel file', default=None)
-    
+    parser.add_argument('-l', '--logs', dest='logs_excel', help='path to car parking logs excel file', default=None)
+  
+    parser.add_argument('-u', '--user', dest='db_user', help='user name of db. default is root', default=None)
+    parser.add_argument('-a', '--address', dest='address', help='address for mysql instance. default is 127.0.0.1', default='127.0.0.1')
+    parser.add_argument('-P', '--password', dest='password', help='password of db. default is root', default='root')
+    parser.add_argument('-N', '--db-name', dest='db_name', help='name of db. default is cars_db', default='cars_db')
+    parser.add_argument('-p', '--port', dest='db_port', help='port for mysql instance. default is 3306', default=3306)
     args = parser.parse_args()
 
 
