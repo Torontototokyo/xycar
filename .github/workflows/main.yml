@@ -14,6 +14,7 @@ jobs:
   build:
     # 指定运行环境为最新版的 Windows
     runs-on: windows-latest
+    environment: sms_env
     steps:
       # 1. 拉取你的代码仓库
       - name: Checkout code
@@ -29,6 +30,10 @@ jobs:
       # 3. 安装项目依赖和 PyInstaller
       - name: Install dependencies
         run: |
+          echo "ACCESS_KEY_ID=${{ secrets.ACCESS_KEY_ID }}" >> .env
+          echo "ACCESS_KEY_SECRET=${{ secrets.ACCESS_KEY_SECRET }}" >> .env
+          echo "TEMPLATE_CODE=${{ secrets.TEMPLATE_CODE }}" >> .env
+          echo "SIGN_NAME=${{ secrets.SIGN_NAME }}" >> .env
           pip install .
           # 安装 PyInstaller
           pip install pyinstaller
@@ -38,10 +43,7 @@ jobs:
         run: |
           # --onefile: 打包成单个文件
           # --noconsole: 如果你的程序有 GUI (如 tkinter, PyQt)，加上这个可以隐藏命令行窗口
-          echo "ACCESS_KEY_ID=${{ secrets.ACCESS_KEY_ID }}" >> .env
-          echo "ACCESS_KEY_SECRET=${{ secrets.ACCESS_KEY_SECRET }}" >> .env
-          echo "TEMPLATE_CODE=${{ secrets.TEMPLATE_CODE }}" >> .env
-          echo "SIGN_NAME=${{ secrets.SIGN_NAME }}" >> .env
+        
           pyinstaller insert.spec
           pyinstaller send_sms.spec
 
