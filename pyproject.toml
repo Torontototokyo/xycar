@@ -14,7 +14,8 @@ dependencies = [
     'alibabacloud_tea_util',
     'alibabacloud_dysmsapi20170525',
     'alibabacloud_tea_openapi',
-    'alibabacloud_credentials'
+    'alibabacloud_credentials',
+    'dotenv'
 ]
 
 [tool.setuptools]
