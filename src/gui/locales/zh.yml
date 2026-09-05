@@ -25,3 +25,7 @@ exit: 退出
 db_connection_settings: 数据库连接设置
 file_selectors: 选择文件
 main_tab: 检索超时【工作卡】
+sms_tab: 发送短信
+sms_success: 短信发送成功
+time: 时间
+sms_failed: 短信发送失败

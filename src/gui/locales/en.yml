@@ -25,3 +25,4 @@ db_connection_settings: Database Connection Settings
 file_selectors: File Selectors
 run: Run
 main_tab: Main Tab
+sms_tab: SMS Tab

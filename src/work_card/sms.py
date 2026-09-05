@@ -88,7 +88,7 @@ class Sample:
         car_no: str,
         hour,
         phone_numer
-    ) -> None:
+    ):
         client = Sample.create_client()
         
         send_sms_request = dysmsapi_20170525_models.SendSmsRequest(
@@ -102,14 +102,9 @@ class Sample:
         )
         try:
             resp = client.send_sms_with_options(send_sms_request, util_models.RuntimeOptions())
-            print(json.dumps(resp, default=str, indent=2))
+            return json.dumps(resp, default=str, indent=2)
         except Exception as error:
-            # 此处仅做打印展示，请谨慎对待异常处理，在工程项目中切勿直接忽略异常。
-            # 错误 message
-            print(error.message)
-            # 诊断地址
-            print(error.data.get("Recommend"))
-
+            raise error
     @staticmethod
     async def main_async(
         args: List[str],

@@ -1,7 +1,7 @@
 from PyQt6.QtWidgets import (
     QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
     QGridLayout, QLabel, QLineEdit, QPushButton, QFileDialog,
-    QGroupBox, QSpinBox,QTabWidget, QMessageBox
+    QGroupBox, QSpinBox,QTabWidget, QMessageBox,QTextEdit
 )
 from PyQt6.QtCore import Qt
 import sys
@@ -9,6 +9,7 @@ import gui.console
 import gui.translator 
 import pandas as pd
 import work_card.db as db
+from work_card.sms import Sample
 translator = gui.translator.YAMLTranslator()
 
 translator.set_language('zh')
@@ -30,13 +31,21 @@ class DatabaseConnectionWindow(QMainWindow):
         layout.addWidget(self.tabs)
 
         # Main layout for the first tab
-        main_tab = QWidget()
-        main_layout = QVBoxLayout(main_tab)
-        self.tabs.addTab(main_tab, translator.get("main_tab"))
+       
+        self.create_log_processor_tab()
 
-        # Create the database connection group
+        self.create_sms_tab()
+
+
+     
+    def create_log_processor_tab(self):
+        self.main_tab = QWidget()
+        self.tabs.addTab(self.main_tab, translator.get("main_tab"))
+        
+        main_layout = QVBoxLayout(self.main_tab)
+         # Create the database connection group
         db_group = QGroupBox(translator.get("db_connection_settings"))
-        self.tabs = QTabWidget()
+
         db_layout = QGridLayout()
         # db_layout = QVBoxLayout()
 
@@ -83,7 +92,7 @@ class DatabaseConnectionWindow(QMainWindow):
         main_layout.addWidget(db_group)
 
         # Add console widget
-      
+        
         # Create the file selectors group
         file_group = QGroupBox(translator.get("file_selectors"))
         file_layout = QVBoxLayout()
@@ -139,8 +148,99 @@ class DatabaseConnectionWindow(QMainWindow):
         main_layout.addStretch()
 
      
+    def create_sms_tab(self):
+        """Create a tab with file selector, run, clear, and exit buttons"""
+        tab = QWidget()
+        tab_layout = QVBoxLayout(tab)
+
+        self.tabs.addTab(tab, translator.get("sms_tab"))  # You can use translator.get("send_sms") if you have a translation for it
+        
+        
+        # === FILE SELECTOR SECTION ===
+        file_group = QGroupBox(translator.get("file_selectors"))
+
+        file_layout = QVBoxLayout(file_group)
+        
+        # File path with browse button
+        file_row = QHBoxLayout()
+        
+        self.sms_file_path = QLineEdit()
+        self.sms_file_path.setPlaceholderText(translator.get("select_file"))
+
+        file_row.addWidget(self.sms_file_path)
+        
+        browse_btn = QPushButton(translator.get("select_file"))
+
+        browse_btn.clicked.connect(lambda: self.browse_file(self.sms_file_path))
+
+        file_row.addWidget(browse_btn)
+        
+        file_layout.addLayout(file_row)
+        
+
+        tab_layout.addWidget(file_group)
+        
+        # === Console DISPLAY ===
+        self.sms_console = gui.console.ConsoleOutput(namespace={'app': self})
+        tab_layout.addWidget(self.sms_console)
+        
+        
+        # === BUTTON SECTION ===
+
+
+        button_layout = QHBoxLayout()
 
         
+        # Run button
+        self.run_btn = QPushButton(translator.get("run"))
+        self.run_btn.clicked.connect(self.run_sms_processor)
+
+        button_layout.addWidget(self.run_btn)
+        
+        # Clear button
+        self.clear_btn = QPushButton(translator.get("clear_all"))
+        self.clear_btn.clicked.connect(self.clear_sms_content)
+
+        button_layout.addWidget(self.clear_btn)
+        
+        # Exit button
+        self.exit_btn = QPushButton(translator.get("exit"))
+        self.exit_btn.clicked.connect(self.close)
+
+        button_layout.addWidget(self.exit_btn)
+        
+        # Status label
+       
+        tab_layout.addLayout(button_layout)
+        
+        # Add stretch to push everything up
+        tab_layout.addStretch()
+        
+
+    def run_sms_processor(self):
+        sms_file = self.sms_file_path.text()
+        if not sms_file:
+            self.sms_console.print_output("⚠️  Please select a file to process.")
+            return
+
+        df = pd.read_excel(sms_file)
+    
+        for _,row in df.iterrows():
+            car_no = row['车牌号码']
+            phone_number = row['手机号码']
+            hour = row['超时小时']
+            # print(phone_number,car_no,hour)
+            try:
+                Sample.sms(car_no=car_no,hour=hour,phone_numer=phone_number)
+                now = pd.Timestamp.now().strftime("%Y-%m-%d %H:%M:%S")
+                self.sms_console.print_output(f"✅ {translator.get('sms_success')} {car_no} - {phone_number} {translator.get('time')} : {now}")
+            except Exception as e:
+                self.sms_console.print_output(f"❌ {translator.get('sms_failed')} {car_no} - {phone_number} {translator.get('time')} : {now}")
+            pass
+    def clear_sms_content(self):
+        self.sms_file_path.clear()
+        self.sms_console.clear()
+
     def browse_file(self, line_edit):
         """Open file dialog and set the selected file path"""
         file_path, _ = QFileDialog.getOpenFileName(
