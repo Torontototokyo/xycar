@@ -34,6 +34,7 @@ jobs:
           echo "ACCESS_KEY_SECRET=${{ secrets.ACCESS_KEY_SECRET }}" >> .env
           echo "TEMPLATE_CODE=${{ secrets.TEMPLATE_CODE }}" >> .env
           echo "SIGN_NAME=${{ secrets.SIGN_NAME }}" >> .env
+          echo "LOCALE=zh" >> .env
           pip install .
           # 安装 PyInstaller
           pip install pyinstaller
