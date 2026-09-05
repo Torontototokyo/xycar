@@ -24,8 +24,16 @@ class DatabaseConnectionWindow(QMainWindow):
         # Central widget and main layout
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
-        main_layout = QVBoxLayout(central_widget)
-        
+        layout = QVBoxLayout(central_widget)
+
+        self.tabs = QTabWidget()
+        layout.addWidget(self.tabs)
+
+        # Main layout for the first tab
+        main_tab = QWidget()
+        main_layout = QVBoxLayout(main_tab)
+        self.tabs.addTab(main_tab, translator.get("main_tab"))
+
         # Create the database connection group
         db_group = QGroupBox(translator.get("db_connection_settings"))
         self.tabs = QTabWidget()

@@ -24,3 +24,4 @@ clear_all: 清空所有
 exit: 退出
 db_connection_settings: 数据库连接设置
 file_selectors: 选择文件
+main_tab: 检索超时【工作卡】

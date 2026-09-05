@@ -5,7 +5,7 @@ from typing import Any, Dict, Optional
 class YAMLTranslator:
     """Simple YAML-based translator with single function for language selection"""
     
-    def __init__(self, locales_dir: str = './locales'):
+    def __init__(self, locales_dir: str = './src/gui/locales'):
         self.locales_dir = locales_dir
         self.translations: Dict[str, Dict] = {}
         self.current_lang: str = 'en'
