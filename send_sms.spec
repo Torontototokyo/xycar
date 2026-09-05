@@ -5,7 +5,7 @@ a = Analysis(
     ['src/work_card/send_sms.py'],
     pathex=[],
     binaries=[],
-    datas=[('src/work_card/*.py', 'work_card','.env')],
+    datas=[('src/work_card/*.py', 'work_card'),('.env','.')],
     hiddenimports=[
         'sqlalchemy',
         'pymysql',
