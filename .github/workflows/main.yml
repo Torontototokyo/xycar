@@ -55,6 +55,13 @@ jobs:
           name: windows-exe
           # 上传 dist 文件夹下所有 .exe 文件
           path: dist/*.exe
+      - name: Test the built EXE
+        run: |
+          # 测试生成的 EXE 文件是否能正常运行
+          dist/insert.exe --help
+          dist/send_sms.exe --help
+          
+          
   publish:
     # 这个任务依赖于 build 任务成功完成
     needs: build
