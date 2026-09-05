@@ -1,0 +1,189 @@
+from PyQt6.QtWidgets import (
+    QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
+    QGridLayout, QLabel, QLineEdit, QPushButton, QFileDialog,
+    QGroupBox, QSpinBox
+)
+from PyQt6.QtCore import Qt
+import sys
+import gui.console
+import gui.translator 
+translator = gui.translator.YAMLTranslator()
+
+translator.set_language('zh')
+
+
+
+class DatabaseConnectionWindow(QMainWindow):
+    def __init__(self):
+        super().__init__()
+        self.setWindowTitle(translator.get("myapp"))
+        self.setMinimumSize(600, 400)
+        
+        # Central widget and main layout
+        central_widget = QWidget()
+        self.setCentralWidget(central_widget)
+        main_layout = QVBoxLayout(central_widget)
+        
+        # Create the database connection group
+        db_group = QGroupBox(translator.get("db_connection_settings"))
+        db_layout = QGridLayout()
+        
+        # Database fields
+        # Row 0: Username
+        db_layout.addWidget(QLabel(translator.get("user")), 0, 0)
+        self.db_username = QLineEdit()
+        self.db_username.setPlaceholderText(translator.get("enter_username"))
+        db_layout.addWidget(self.db_username, 0, 1)
+        
+        # Row 1: Password
+        db_layout.addWidget(QLabel(translator.get("password")), 1, 0)
+        self.db_password = QLineEdit()
+        self.db_password.setPlaceholderText(translator.get("enter_password"))
+        self.db_password.setEchoMode(QLineEdit.EchoMode.Password)
+        db_layout.addWidget(self.db_password, 1, 1)
+        
+        # Row 2: Address
+        db_layout.addWidget(QLabel(translator.get("address")), 2, 0)
+        self.db_address = QLineEdit()
+        self.db_address.setPlaceholderText(translator.get("enter_address"))
+        db_layout.addWidget(self.db_address, 2, 1)
+        
+        # Row 3: Port
+        db_layout.addWidget(QLabel(translator.get("db_port")), 3, 0)
+        self.db_port = QSpinBox()
+        self.db_port.setRange(1, 65535)
+        self.db_port.setValue(3306)  # Default MySQL port
+        db_layout.addWidget(self.db_port, 3, 1)
+        
+        # Row 4: Database Name
+        db_layout.addWidget(QLabel(translator.get("db_name")), 4, 0)
+        self.db_name = QLineEdit()
+        self.db_name.setPlaceholderText(translator.get("enter_db_name"))
+        db_layout.addWidget(self.db_name, 4, 1)
+        
+        db_group.setLayout(db_layout)
+        main_layout.addWidget(db_group)
+
+        # Add console widget
+      
+        # Create the file selectors group
+        file_group = QGroupBox(translator.get("file_selectors"))
+        file_layout = QVBoxLayout()
+        
+        # File Selector 1
+        file1_layout = QHBoxLayout()
+        file1_layout.addWidget(QLabel(translator.get("enter_card_file")))
+        self.file1_path = QLineEdit()
+        self.file1_path.setPlaceholderText(translator.get("select_card_file"))
+        file1_layout.addWidget(self.file1_path)
+        self.file1_button = QPushButton(translator.get("select_file"))
+        self.file1_button.clicked.connect(lambda: self.browse_file(self.file1_path))
+        file1_layout.addWidget(self.file1_button)
+        file_layout.addLayout(file1_layout)
+
+        
+        
+        # File Selector 2
+        file2_layout = QHBoxLayout()
+        file2_layout.addWidget(QLabel(translator.get("enter_logs_file")))
+        self.file2_path = QLineEdit()
+        self.file2_path.setPlaceholderText(translator.get("select_logs_file"))
+        file2_layout.addWidget(self.file2_path)
+        self.file2_button = QPushButton(translator.get("select_file"))
+        self.file2_button.clicked.connect(lambda: self.browse_file(self.file2_path))
+        file2_layout.addWidget(self.file2_button)
+        file_layout.addLayout(file2_layout)
+        
+        file_group.setLayout(file_layout)
+        main_layout.addWidget(file_group)
+
+        
+        self.console = gui.console.ConsoleOutput(namespace={'app': self})
+        main_layout.addWidget(self.console)
+        # Action buttons
+        button_layout = QHBoxLayout()
+        
+        self.connect_button = QPushButton(translator.get("run"))
+        self.connect_button.clicked.connect(self.connect_to_database)
+        button_layout.addWidget(self.connect_button)
+        
+        self.clear_button = QPushButton(translator.get("clear_all"))
+        self.clear_button.clicked.connect(self.clear_all)
+        button_layout.addWidget(self.clear_button)
+        
+        self.exit_button = QPushButton(translator.get("exit"))
+        self.exit_button.clicked.connect(self.close)
+        button_layout.addWidget(self.exit_button)
+        
+        main_layout.addLayout(button_layout)
+        
+        # Add stretch to push everything to the top
+        main_layout.addStretch()
+    
+    def browse_file(self, line_edit):
+        """Open file dialog and set the selected file path"""
+        file_path, _ = QFileDialog.getOpenFileName(
+            self,
+            "Select File",
+            "",
+            "All Files (*.*);;Text Files (*.txt);;CSV Files (*.csv);;JSON Files (*.json)"
+        )
+        if file_path:
+            line_edit.setText(file_path)
+    
+    def connect_to_database(self):
+        """Collect all values and display them (placeholder for actual connection)"""
+        username = self.db_username.text()
+        password = self.db_password.text()
+        address = self.db_address.text()
+        port = self.db_port.value()
+        db_name = self.db_name.text()
+        file1 = self.file1_path.text()
+        file2 = self.file2_path.text()
+        
+        print("=" * 50)
+        print("Database Connection Details:")
+        print(f"Username: {username}")
+        print(f"Password: {'*' * len(password)}")
+        print(f"Address: {address}")
+        print(f"Port: {port}")
+        print(f"Database: {db_name}")
+        print(f"File 1: {file1}")
+        print(f"File 2: {file2}")
+        print("=" * 50)
+        
+        # Here you would add your actual database connection logic
+        # e.g., using psycopg2, sqlite3, mysql-connector-python, etc.
+        
+        # Simple validation
+        if not all([username, address, db_name]):
+            print("⚠️  Please fill in all required fields (Username, Address, Database Name)")
+        else:
+            print("✅ All fields filled. Ready to connect!")
+    
+    def clear_all(self):
+        """Clear all input fields"""
+        self.db_username.clear()
+        self.db_password.clear()
+        self.db_address.clear()
+        self.db_port.setValue(3306)
+        self.db_name.clear()
+        self.file1_path.clear()
+        self.file2_path.clear()
+        print("All fields cleared")
+
+
+
+def main():
+    app = QApplication(sys.argv)
+    
+    # Set application style for better appearance
+    app.setStyle('Fusion')
+    
+    window = DatabaseConnectionWindow()
+    window.show()
+    
+    sys.exit(app.exec())
+
+if __name__ == '__main__':
+    main()

@@ -1,0 +1,26 @@
+myapp: My Application
+user: User
+password: Password
+db_name: Database Name
+address: Address
+db_address: Database Address
+db_port: Database Port
+select_file: Select File
+select_card_file: Select Card File
+select_logs_file: Select Logs File
+sms_target: SMS Target
+enter_password: Enter Password
+enter_username: Enter Username
+enter_db_name: Enter Database Name
+enter_address: Enter Address
+enter_db_address: Enter Database Address
+enter_db_port: Enter Database Port
+enter_card_file: Enter Card File
+enter_logs_file: Enter Logs File
+select_file: Select File
+connect: Connect
+clear_all: Clear All
+exit: Exit
+db_connection_settings: Database Connection Settings
+file_selectors: File Selectors
+run: Run
