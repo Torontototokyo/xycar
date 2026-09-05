@@ -46,8 +46,13 @@ jobs:
         
           pyinstaller insert.spec
           pyinstaller send_sms.spec
+      #5. test the built EXE
+      - name: Test the built EXE
+        run: |
+          # 测试生成的 EXE 文件是否能正常运行
+          dist/send_sms.exe -f tests/xlsx/2026-08-311#超时转临停车辆.xlsx
 
-      # 5. 将生成的 .exe 文件上传为 Artifact，方便下载
+      # 6. 将生成的 .exe 文件上传为 Artifact，方便下载
       - name: Upload Windows EXE as artifact
         uses: actions/upload-artifact@v4
         with:
@@ -55,10 +60,7 @@ jobs:
           name: windows-exe
           # 上传 dist 文件夹下所有 .exe 文件
           path: dist/*.exe
-      - name: Test the built EXE
-        run: |
-          # 测试生成的 EXE 文件是否能正常运行
-          dist/send_sms.exe -f tests/xlsx/2026-08-311#超时转临停车辆.xlsx
+      
           
           
   publish:
