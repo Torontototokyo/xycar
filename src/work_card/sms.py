@@ -15,7 +15,23 @@ from alibabacloud_dysmsapi20170525 import models as dysmsapi_20170525_models
 from alibabacloud_tea_util import models as util_models
 from alibabacloud_tea_util.client import Client as UtilClient
 
-load_dotenv()
+
+def get_resource_path(relative_path):
+    """获取打包后资源的绝对路径"""
+    if getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS'):
+        # 程序被打包运行时，资源在 sys._MEIPASS 目录下
+        base_path = sys._MEIPASS
+    else:
+        # 开发环境下，资源就在脚本的当前目录
+        base_path = os.path.abspath(".")
+
+    return os.path.join(base_path, relative_path)
+
+# 获取打包在内部的 .env 文件的路径
+dotenv_path = get_resource_path('.env')
+
+# 明确告诉 load_dotenv 从这个路径加载
+load_dotenv(dotenv_path=dotenv_path)
 
 ACCESS_KEY_ID:str = os.getenv("ACCESS_KEY_ID")
 ACCESS_KEY_SECRET:str = os.getenv("ACCESS_KEY_SECRET")

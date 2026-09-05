@@ -1,4 +1,5 @@
-*.xlsx
+/*.xlsx
+/src/escape/*.xlsx
 *.log
 *.doc
 *cache*

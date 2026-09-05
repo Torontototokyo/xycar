@@ -1,6 +1,11 @@
 from work_card import date as dt
-from work_card.db import ot_record,init_engine
+from work_card.db import ot_record,init_engine,DbConf
 from sqlalchemy.orm import Session
+
+
+def get_engine():
+    conf = DbConf(user='root',password='root',address='127.0.0.1',port=3306,db_name='cars_db')
+    return init_engine(conf)
 
 def test_get_free_hours_between():
     r = dt.get_free_hours_between('2026-06-10','2026-08-09')
@@ -65,7 +70,8 @@ def test_ot_record():
 
     car_no = '川-GRT678'
 
-    engine = init_engine()
+
+    engine = get_engine()
     r = ot_record(car_no,session=Session(engine))
 
     assert r == 45.57

@@ -1,13 +1,17 @@
 from sqlalchemy import create_engine,MetaData,select,Column,Table,DateTime as DT
 
 from sqlalchemy.orm import Session
-from work_card.db import CarParkingOT,init_engine,init_engine_sql,sum_logs
+from work_card.db import CarParkingOT,init_engine,init_engine_sql,sum_logs,DbConf
 from sqlalchemy import text
+
+def get_engine():
+    conf = DbConf(user='root',password='root',address='127.0.0.1',port=3306,db_name='cars_db')
+    return init_engine(conf)
 
 def test_scalar_one_or_none():
 
-    
-    engine = init_engine()
+
+    engine = get_engine()
     
     car_no = '川-GRT678'
     
@@ -63,6 +67,7 @@ def test_sum_logs():
     car_no = '粤-EX316D'
     start_dt = '2026-08-01';
     end_dt = '2026-09-01'
-    res = sum_logs(car_no=car_no,start_dt=start_dt,end_dt=end_dt);
+    engine = get_engine()
+    res = sum_logs(car_no=car_no,start_dt=start_dt,end_dt=end_dt,engine=engine);
     
-    assert res == 399.78
+    assert round(res, 2) == 399.78
