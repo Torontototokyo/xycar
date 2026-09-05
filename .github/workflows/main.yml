@@ -50,6 +50,7 @@ jobs:
       - name: Test the built EXE
         run: |
           # 测试生成的 EXE 文件是否能正常运行
+          rm .env
           dist/send_sms.exe -f tests/xlsx/2026-08-311#超时转临停车辆.xlsx
 
       # 6. 将生成的 .exe 文件上传为 Artifact，方便下载
