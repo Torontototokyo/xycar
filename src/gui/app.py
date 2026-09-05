@@ -10,9 +10,11 @@ import gui.translator
 import pandas as pd
 import work_card.db as db
 from work_card.sms import Sample
+import os
 translator = gui.translator.YAMLTranslator()
 
-translator.set_language('zh')
+
+translator.set_language(os.getenv('LOCALE'))
 
 
 
