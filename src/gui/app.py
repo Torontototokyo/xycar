@@ -1,12 +1,14 @@
 from PyQt6.QtWidgets import (
     QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
     QGridLayout, QLabel, QLineEdit, QPushButton, QFileDialog,
-    QGroupBox, QSpinBox
+    QGroupBox, QSpinBox,QTabWidget, QMessageBox
 )
 from PyQt6.QtCore import Qt
 import sys
 import gui.console
 import gui.translator 
+import pandas as pd
+import work_card.db as db
 translator = gui.translator.YAMLTranslator()
 
 translator.set_language('zh')
@@ -26,13 +28,18 @@ class DatabaseConnectionWindow(QMainWindow):
         
         # Create the database connection group
         db_group = QGroupBox(translator.get("db_connection_settings"))
+        self.tabs = QTabWidget()
         db_layout = QGridLayout()
+        # db_layout = QVBoxLayout()
+
+
         
         # Database fields
         # Row 0: Username
         db_layout.addWidget(QLabel(translator.get("user")), 0, 0)
         self.db_username = QLineEdit()
         self.db_username.setPlaceholderText(translator.get("enter_username"))
+        self.db_username.setText('root')  # Default username
         db_layout.addWidget(self.db_username, 0, 1)
         
         # Row 1: Password
@@ -40,12 +47,14 @@ class DatabaseConnectionWindow(QMainWindow):
         self.db_password = QLineEdit()
         self.db_password.setPlaceholderText(translator.get("enter_password"))
         self.db_password.setEchoMode(QLineEdit.EchoMode.Password)
+        self.db_password.setText('root')  # Default password
         db_layout.addWidget(self.db_password, 1, 1)
         
         # Row 2: Address
         db_layout.addWidget(QLabel(translator.get("address")), 2, 0)
         self.db_address = QLineEdit()
         self.db_address.setPlaceholderText(translator.get("enter_address"))
+        self.db_address.setText('localhost')
         db_layout.addWidget(self.db_address, 2, 1)
         
         # Row 3: Port
@@ -59,6 +68,7 @@ class DatabaseConnectionWindow(QMainWindow):
         db_layout.addWidget(QLabel(translator.get("db_name")), 4, 0)
         self.db_name = QLineEdit()
         self.db_name.setPlaceholderText(translator.get("enter_db_name"))
+        self.db_name.setText('cars_db')  # Default database name
         db_layout.addWidget(self.db_name, 4, 1)
         
         db_group.setLayout(db_layout)
@@ -104,7 +114,7 @@ class DatabaseConnectionWindow(QMainWindow):
         button_layout = QHBoxLayout()
         
         self.connect_button = QPushButton(translator.get("run"))
-        self.connect_button.clicked.connect(self.connect_to_database)
+        self.connect_button.clicked.connect(self.run)
         button_layout.addWidget(self.connect_button)
         
         self.clear_button = QPushButton(translator.get("clear_all"))
@@ -119,7 +129,10 @@ class DatabaseConnectionWindow(QMainWindow):
         
         # Add stretch to push everything to the top
         main_layout.addStretch()
-    
+
+     
+
+        
     def browse_file(self, line_edit):
         """Open file dialog and set the selected file path"""
         file_path, _ = QFileDialog.getOpenFileName(
@@ -131,15 +144,15 @@ class DatabaseConnectionWindow(QMainWindow):
         if file_path:
             line_edit.setText(file_path)
     
-    def connect_to_database(self):
+    def run(self):
         """Collect all values and display them (placeholder for actual connection)"""
         username = self.db_username.text()
         password = self.db_password.text()
         address = self.db_address.text()
         port = self.db_port.value()
         db_name = self.db_name.text()
-        file1 = self.file1_path.text()
-        file2 = self.file2_path.text()
+        card_excel = self.file1_path.text()
+        logs_excel = self.file2_path.text()
         
         print("=" * 50)
         print("Database Connection Details:")
@@ -148,9 +161,13 @@ class DatabaseConnectionWindow(QMainWindow):
         print(f"Address: {address}")
         print(f"Port: {port}")
         print(f"Database: {db_name}")
-        print(f"File 1: {file1}")
-        print(f"File 2: {file2}")
+        print(f"Card File: {card_excel}")
+        print(f"Log File: {logs_excel}")
         print("=" * 50)
+
+      
+
+        
         
         # Here you would add your actual database connection logic
         # e.g., using psycopg2, sqlite3, mysql-connector-python, etc.
@@ -159,7 +176,31 @@ class DatabaseConnectionWindow(QMainWindow):
         if not all([username, address, db_name]):
             print("⚠️  Please fill in all required fields (Username, Address, Database Name)")
         else:
-            print("✅ All fields filled. Ready to connect!")
+            self.console.print_output("✅ All fields filled. Ready to connect!")
+
+            conf = db.DbConf(user=username,password=password,address=address,port=port,db_name=db_name)
+                
+            engine = db.init_engine(conf)
+            if card_excel:
+                df = pd.read_excel(card_excel)
+        
+                db.import_car_cards(df,engine)
+        
+            if logs_excel:
+        
+                df = pd.read_excel(logs_excel)
+                
+                db.import_logs(df,engine)
+                
+            result = db.update_card_parking_time(engine=engine)
+
+            if result:
+                self.console.print_output(f"✅ 超时转临停车辆已导出到: {result}")
+            else:
+                self.console.print_output("⚠️ 没有超时转临停车辆需要导出")
+
+            
+            
     
     def clear_all(self):
         """Clear all input fields"""
@@ -170,8 +211,16 @@ class DatabaseConnectionWindow(QMainWindow):
         self.db_name.clear()
         self.file1_path.clear()
         self.file2_path.clear()
-        print("All fields cleared")
+        self.console.print_output("All fields cleared")
 
+    def add_tab(self, title, content):
+        """Add a tab with simple content"""
+        tab = QWidget()
+        layout = QVBoxLayout(tab)
+        label = QLabel(content)
+        label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(label)
+        self.tabs.addTab(tab, title)
 
 
 def main():
