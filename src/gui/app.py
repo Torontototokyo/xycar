@@ -286,7 +286,7 @@ class DatabaseConnectionWindow(QMainWindow):
         print("=" * 50)
 
       
-
+        
         
         
         # Here you would add your actual database connection logic
@@ -321,6 +321,8 @@ class DatabaseConnectionWindow(QMainWindow):
                 db.import_logs(df,engine)
 
             if logs_excel or card_excel:
+
+                self.console.print_output('----------运行中----------')
                 result = db.update_card_parking_time(engine=engine)
 
                 if result:
