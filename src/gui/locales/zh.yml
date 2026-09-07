@@ -29,3 +29,4 @@ sms_tab: 发送短信
 sms_success: 短信发送成功
 time: 时间
 sms_failed: 短信发送失败
+esdbconn_failed: 创建数据库连接失败

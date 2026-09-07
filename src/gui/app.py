@@ -3,6 +3,7 @@ from PyQt6.QtWidgets import (
     QGridLayout, QLabel, QLineEdit, QPushButton, QFileDialog,
     QGroupBox, QSpinBox,QTabWidget, QMessageBox,QTextEdit
 )
+from pymysql.err import OperationalError
 from PyQt6.QtCore import Qt
 import sys
 import gui.console as console
@@ -13,6 +14,7 @@ from work_card.sms import Sample
 import os
 from work_card.utils import get_resource_path
 from dotenv import load_dotenv
+
 # 获取打包在内部的 .env 文件的路径
 dotenv_path = get_resource_path('.env')
 
@@ -297,8 +299,16 @@ class DatabaseConnectionWindow(QMainWindow):
             self.console.print_output("✅ All fields filled. Ready to connect!")
 
             conf = db.DbConf(user=username,password=password,address=address,port=port,db_name=db_name)
+
+            
+            res = db.test_connection_with_context(conf)
+
+            if not res:
+                return self.console.print_output(translator.get('esdbconn_failed'))
                 
             engine = db.init_engine(conf)
+
+           
             if card_excel:
                 df = pd.read_excel(card_excel)
         
@@ -309,14 +319,18 @@ class DatabaseConnectionWindow(QMainWindow):
                 df = pd.read_excel(logs_excel)
                 
                 db.import_logs(df,engine)
-                
-            result = db.update_card_parking_time(engine=engine)
 
-            if result:
-                self.console.print_output(f"✅ 超时转临停车辆已导出到: {result}")
-            else:
-                self.console.print_output("⚠️ 没有超时转临停车辆需要导出")
+            if logs_excel or card_excel:
+                result = db.update_card_parking_time(engine=engine)
 
+                if result:
+                    self.console.print_output(f"✅ 超时转临停车辆已导出到: {result}")
+                else:
+                    self.console.print_output("⚠️ 没有超时转临停车辆需要导出")
+
+            # except Error as e:
+
+            #     self.console.print_output(translator.get('esdbconn_failed'))
             
             
     

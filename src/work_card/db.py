@@ -12,6 +12,8 @@ import work_card.card as card
 import numpy as np
 import work_card.utils as utils
 import logging
+import pymysql
+from pymysql import Error
 
 class DbConf:
 
@@ -24,7 +26,39 @@ class DbConf:
         self.port = port
         self.db_name = db_name
     
-    
+
+
+def test_connection_with_context(conf:DbConf):
+    """使用 with 语句测试连接（自动管理资源）"""
+    try:
+        with pymysql.connect(
+            host=conf.address,
+            user=conf.user,
+            password=conf.password,
+            database=conf.db_name,
+            charset='utf8mb4',
+            port=conf.port,
+            autocommit=True  # 自动提交
+        ) as connection:
+            print("✅ 连接成功")
+            
+            # 执行简单查询测试
+            with connection.cursor() as cursor:
+                cursor.execute("SELECT VERSION()")
+                version = cursor.fetchone()
+                print(f"MySQL 版本: {version[0]}")
+                
+                cursor.execute("SELECT DATABASE()")
+                db_name = cursor.fetchone()
+                print(f"当前数据库: {db_name[0]}")
+                
+            return True
+            
+    except Error as e:
+        print(f"❌ 数据库错误: {e}")
+        return False
+
+# 执行
     
 # logging.basicConfig()
 # logging.getLogger('sqlalchemy.engine').setLevel(logging.INFO)
