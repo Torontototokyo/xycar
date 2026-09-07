@@ -5,13 +5,13 @@ from PyQt6.QtWidgets import (
 )
 from PyQt6.QtCore import Qt
 import sys
-import gui.console
-import gui.translator 
+import gui.console as console
+import gui.translator as t
 import pandas as pd
 import work_card.db as db
 from work_card.sms import Sample
 import os
-translator = gui.translator.YAMLTranslator()
+translator = t.YAMLTranslator()
 
 
 translator.set_language(os.getenv('LOCALE'))
@@ -127,7 +127,7 @@ class DatabaseConnectionWindow(QMainWindow):
         main_layout.addWidget(file_group)
 
         
-        self.console = gui.console.ConsoleOutput(namespace={'app': self})
+        self.console = console.ConsoleOutput(namespace={'app': self})
         main_layout.addWidget(self.console)
         # Action buttons
         button_layout = QHBoxLayout()
@@ -183,7 +183,7 @@ class DatabaseConnectionWindow(QMainWindow):
         tab_layout.addWidget(file_group)
         
         # === Console DISPLAY ===
-        self.sms_console = gui.console.ConsoleOutput(namespace={'app': self})
+        self.sms_console = console.ConsoleOutput(namespace={'app': self})
         tab_layout.addWidget(self.sms_console)
         
         
