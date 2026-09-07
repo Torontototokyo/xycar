@@ -45,7 +45,7 @@ jobs:
           # --onefile: 打包成单个文件
           # --noconsole: 如果你的程序有 GUI (如 tkinter, PyQt)，加上这个可以隐藏命令行窗口
         
-          pyinstaller --noconsole app.spec
+          pyinstaller app.spec
       #5. test the built EXE
       # - name: Test the built EXE
       #   run: |
