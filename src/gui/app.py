@@ -22,7 +22,7 @@ load_dotenv(dotenv_path=dotenv_path)
 translator = t.YAMLTranslator()
 
 
-translator.set_language(os.getenv('LOCALE'))
+translator.set_language('zh')
 
 
 
