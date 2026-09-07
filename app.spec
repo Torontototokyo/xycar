@@ -6,7 +6,7 @@ a = Analysis(
     pathex=[],
     binaries=[],
      datas=[
-        ('src/work_card/*.py', 'work_card')
+        ('src/work_card/*.py', 'work_card'),
         ('.env','.'),
         ('src/gui/locales/*.yml', 'locales')
      ],
