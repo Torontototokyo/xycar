@@ -3,7 +3,7 @@ from dotenv import load_dotenv
 # -*- coding: utf-8 -*-
 # This file is auto-generated, don't edit it. Thanks.
 import os
-import sys
+from work_card.utils import get_resource_path
 import json
 
 from typing import List
@@ -16,16 +16,6 @@ from alibabacloud_tea_util import models as util_models
 from alibabacloud_tea_util.client import Client as UtilClient
 
 
-def get_resource_path(relative_path):
-    """获取打包后资源的绝对路径"""
-    if getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS'):
-        # 程序被打包运行时，资源在 sys._MEIPASS 目录下
-        base_path = sys._MEIPASS
-    else:
-        # 开发环境下，资源就在脚本的当前目录
-        base_path = os.path.abspath(".")
-
-    return os.path.join(base_path, relative_path)
 
 # 获取打包在内部的 .env 文件的路径
 dotenv_path = get_resource_path('.env')

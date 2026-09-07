@@ -11,6 +11,14 @@ import pandas as pd
 import work_card.db as db
 from work_card.sms import Sample
 import os
+from work_card.utils import get_resource_path
+from dotenv import load_dotenv
+# 获取打包在内部的 .env 文件的路径
+dotenv_path = get_resource_path('.env')
+
+# 明确告诉 load_dotenv 从这个路径加载
+load_dotenv(dotenv_path=dotenv_path)
+
 translator = t.YAMLTranslator()
 
 
