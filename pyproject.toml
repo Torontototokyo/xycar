@@ -16,7 +16,8 @@ dependencies = [
     'alibabacloud_tea_openapi',
     'alibabacloud_credentials',
     'python-dotenv',
-    'pyqt6'
+    'pyqt6',
+    'pyyaml'
 ]
 
 [tool.setuptools]
