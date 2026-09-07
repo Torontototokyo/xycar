@@ -5,7 +5,11 @@ a = Analysis(
     ['src/gui/app.py'],
     pathex=[],
     binaries=[],
-     datas=[('src/work_card/*.py', 'work_card'),('.env','.'),('src/gui/locales/*','.')],
+     datas=[
+        ('src/work_card/*.py', 'work_card'),
+        ('.env','.'),
+        ('src/gui/locales/*.yml', 'locales')
+     ],
     hiddenimports=[],
     hookspath=[],
     hooksconfig={},
