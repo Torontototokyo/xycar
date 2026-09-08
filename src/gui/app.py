@@ -68,7 +68,7 @@ class DatabaseConnectionWindow(QMainWindow):
         db_layout.addWidget(QLabel(translator.get("user")), 0, 0)
         self.db_username = QLineEdit()
         self.db_username.setPlaceholderText(translator.get("enter_username"))
-        self.db_username.setText('root')  # Default username
+        # self.db_username.setText('root')  # Default username
         db_layout.addWidget(self.db_username, 0, 1)
         
         # Row 1: Password
@@ -76,7 +76,7 @@ class DatabaseConnectionWindow(QMainWindow):
         self.db_password = QLineEdit()
         self.db_password.setPlaceholderText(translator.get("enter_password"))
         self.db_password.setEchoMode(QLineEdit.EchoMode.Password)
-        self.db_password.setText('root')  # Default password
+        # self.db_password.setText('root')  # Default password
         db_layout.addWidget(self.db_password, 1, 1)
         
         # Row 2: Address
@@ -97,7 +97,7 @@ class DatabaseConnectionWindow(QMainWindow):
         db_layout.addWidget(QLabel(translator.get("db_name")), 4, 0)
         self.db_name = QLineEdit()
         self.db_name.setPlaceholderText(translator.get("enter_db_name"))
-        self.db_name.setText('cars_db')  # Default database name
+        # self.db_name.setText('cars_db')  # Default database name
         db_layout.addWidget(self.db_name, 4, 1)
         
         db_group.setLayout(db_layout)
@@ -273,6 +273,19 @@ class DatabaseConnectionWindow(QMainWindow):
         db_name = self.db_name.text()
         card_excel = self.file1_path.text()
         logs_excel = self.file2_path.text()
+
+        if not username:
+            return self.console.print_output('⚠️ 请输入数据库用户名')
+        if not password:
+            return self.console.print_output('⚠️ 请输入数据库密码')
+        if not db_name:
+            return self.console.print_output('⚠️ 请输入数据库名称')
+        if not address:
+            return self.console.print_output('⚠️ 请输入数据库主机')
+        if not port:
+            return self.console.print_output('⚠️ 请输入数据库连接端口')
+        
+            
         
         print("=" * 50)
         print("Database Connection Details:")
@@ -287,48 +300,44 @@ class DatabaseConnectionWindow(QMainWindow):
 
       
         
-        
-        
         # Here you would add your actual database connection logic
         # e.g., using psycopg2, sqlite3, mysql-connector-python, etc.
         
         # Simple validation
-        if not all([username, address, db_name]):
-            print("⚠️  Please fill in all required fields (Username, Address, Database Name)")
-        else:
-            self.console.print_output("✅ All fields filled. Ready to connect!")
+        
+        self.console.print_output("✅ All fields filled. Ready to connect!")
 
-            conf = db.DbConf(user=username,password=password,address=address,port=port,db_name=db_name)
+        conf = db.DbConf(user=username,password=password,address=address,port=port,db_name=db_name)
 
+        res = db.test_connection_with_context(conf)
+
+        if not res:
+            return self.console.print_output(translator.get('esdbconn_failed'))
             
-            res = db.test_connection_with_context(conf)
+        engine = db.init_engine(conf)
 
-            if not res:
-                return self.console.print_output(translator.get('esdbconn_failed'))
-                
-            engine = db.init_engine(conf)
-
-           
-            if card_excel:
-                df = pd.read_excel(card_excel)
         
-                db.import_car_cards(df,engine)
-        
-            if logs_excel:
-        
-                df = pd.read_excel(logs_excel)
-                
-                db.import_logs(df,engine)
+        if card_excel:
+            df = pd.read_excel(card_excel)
+    
+            db.import_car_cards(df,engine)
+    
+        if logs_excel:
+    
+            df = pd.read_excel(logs_excel)
+            
+            db.import_logs(df,engine)
 
-            if logs_excel or card_excel:
+        if logs_excel or card_excel:
 
-                self.console.print_output('----------运行中----------')
-                result = db.update_card_parking_time(engine=engine)
+            self.console.print_output('----------运行中----------')
+            
+            result = db.update_card_parking_time_db(engine=engine)
 
-                if result:
-                    self.console.print_output(f"✅ 超时转临停车辆已导出到: {result}")
-                else:
-                    self.console.print_output("⚠️ 没有超时转临停车辆需要导出")
+            if result:
+                self.console.print_output(f"✅ 超时转临停车辆已导出到: {result}")
+            else:
+                self.console.print_output("⚠️ 没有超时转临停车辆需要导出")
 
             # except Error as e:
 

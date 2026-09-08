@@ -1,59 +1,21 @@
 import pandas as pd
 import sqlalchemy as s
 from work_card import db
+from sqlalchemy import text,select
 from sqlalchemy.orm import Session
-import datetime
+from work_card.date import first_day_of_month
+from sqlalchemy.sql import func
+from work_card.utils import delete_dupl,resummarize,get_project_root
+from work_card.card import import_expired,get_engine
+from datetime import datetime
+
 # r = pd.read_excel('Result_5.xlsx')
-engine = db.init_engine()
-with Session(engine) as session:
+conf = db.DbConf(user='root',password='root',address='127.0.0.1',db_name='cars_db',port=3306)
 
-    # stmt = s.select(db.Card).where(db.Card.卡状态.in_(['正常', '临期']));
+# delete_dupl(conf)
 
-    # start_dt = '2026-08-01'
-
-    # result = session.execute(stmt).scalars().all()
-
-    # for card in result:
-    #     car_no = card.车牌号码
-    #     db.update_or_insert_car_leave_log_summery_by_month(car_no, start_dt)
-
-
-    stmt = s.select(db.Card).where(db.Card.超时小时 > 0);
-
-    result = session.execute(stmt).scalars().all()
-
-
-    for _,row in enumerate(result):
-
-        car_no = row.车牌号码
-
-        print(f'正在处理车牌号: {car_no}')
-
-        now = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-        today = datetime.datetime.now().strftime('%Y-%m-%d')
-        stmt = s.insert(db.CarParkingOT).values(
-            car_no=car_no,
-            hours=row.超时小时,
-            arose_at=today,
-            created_at=now,
-            updated_at=now
-        )
-        session.execute(stmt)
-
-        session.commit()
-    # for _,row in r.iterrows():
-
-
-    #     stmt = s.select(db.Logs.id).where(db.Logs.入场时间 == row['入场时间'])
-
-    #     res = session.execute(stmt).first()
-
-    #     delete = s.delete(db.Logs).where(db.Logs.id == res.id)
-
-    #     ___r = session.execute(delete)
-    #     # for _row in res:
-    #     print(___r)
-    # session.commit()
+resummarize(conf)
+# import_expired()
 
 
 

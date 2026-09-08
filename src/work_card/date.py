@@ -1,6 +1,11 @@
 from datetime import datetime,timedelta
 from dateutil.relativedelta import relativedelta
+from typing import List, Dict, Optional
+import logging
 
+# 配置日志
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 YMD = '%Y-%m-%d'
 FM_DAY_END = '%Y-%m-%d 23:59:59'
@@ -14,6 +19,13 @@ def last_day_of_month(any_day):
     next_month = any_day.replace(day=28) + timedelta(days=4)
     # subtracting the number of the current day brings us back one month
     return next_month - timedelta(days=next_month.day)
+
+
+def first_day_of_month(any_day:str):
+    return datetime.strptime(any_day,FM_YMDT).replace(day=1).strftime(YMD)   
+
+def ymd_date(any_day:str,fmt):
+    return datetime.strptime(any_day,fmt).strftime(YMD)   
 
 
 def seperate_date_into_months(start_date,end_date):
@@ -69,6 +81,130 @@ def seperate_date_into_months(start_date,end_date):
     
 
 
+def sub_hours2(datetime1,datetime2):
+    K = "%Y-%m-%d %H:%M:%S"
+    
+    round_to=2
+    if type(datetime1) == str:
+        datetime1 = datetime.strptime(datetime1,K)
+    if type(datetime2) == str:
+        datetime2 = datetime.strptime(datetime2,K)
+
+    hours = (datetime1 - datetime2).total_seconds() / 3600
+
+    # print(hours)
+
+    ls = rec_optimized(datetime2,hours=hours)
+
+    lenls = len(ls) 
+    ks = []
+    for _,r in enumerate(ls):
+
+        fd = r['fd']
+        _fd = datetime.strftime(datetime.strptime(fd,YMD).replace(day=1),FM_DAY_START)
+        h = r['h']
+        if _ == 0:
+            _fd = datetime.strftime(datetime.strptime(fd,YMD),FM_DAY_START)
+        if _ == lenls - 1:
+            lt = datetime1.strftime(FM_YMDT)
+        else:
+            print(fd)
+            _last_day_of_month = last_day_of_month(datetime.strptime(fd,YMD))
+            lt = datetime.strftime(_last_day_of_month,FM_DAY_END)
+        ks.append({
+            '入场时间':_fd,
+            '出场时间':lt,
+            'h':h
+        })
+    return ks
+
+
+def rec_optimized(
+    dt: datetime, 
+    hours: float, 
+    max_months: int = 120  # 最多分配120个月，防止死循环
+) -> List[Dict]:
+    """
+    优化后的时间分配函数
+    
+    Args:
+        dt: 起始日期
+        hours: 总小时数
+        max_months: 最大分配月份数
+    
+    Returns:
+        List[Dict]: 月份分配列表
+    """
+    # 参数验证
+    if not isinstance(dt, datetime):
+        raise TypeError("dt must be datetime object")
+    
+    if hours <= 0:
+        logger.info(f"Hours {hours} <= 0, returning empty list")
+        return []
+    
+    if hours > max_months * 31 * 24:
+        logger.warning(f"Hours {hours} exceeds maximum {max_months * 31 * 24}, consider increasing max_months")
+    
+    result = []
+    current_date = dt
+    remaining_hours = hours
+    month_count = 0
+    
+    while remaining_hours > 0 and month_count < max_months:
+        # 获取本月最后一天
+        last_day = last_day_of_month(current_date)
+        next_month:datetime = last_day + relativedelta(days=1)
+        
+        # 计算本月剩余小时数
+        # days_in_month = (next_month - current_date).days
+        hours_in_month = (next_month.replace(hour=0,minute=0,second=0) - current_date).total_seconds()/3600
+
+
+        # print(hours_in_month,next_month,current_date)
+        # 如果剩余小时数小于本月可用小时数
+        if remaining_hours <= hours_in_month:
+            result.append({
+                'fd': current_date.strftime('%Y-%m-%d'),
+                'h': round(remaining_hours, 2)
+            })
+            break
+        
+        # 分配整月
+        result.append({
+            'fd': current_date.strftime('%Y-%m-%d'),
+            'h': round(hours_in_month, 2)
+        })
+        
+        remaining_hours -= hours_in_month
+        print(remaining_hours)
+        current_date = next_month
+        month_count += 1
+    
+    if month_count >= max_months and remaining_hours > 0:
+        logger.warning(f"Reached maximum months {max_months}, remaining hours: {remaining_hours}")
+    
+    logger.info(f"Allocated {hours} hours across {len(result)} months")
+    return result 
+
+
+def rec(dt:datetime,hours:float,ls=[]):
+
+    next_month = last_day_of_month(dt) + relativedelta(days=1)
+    
+    df_days = (next_month - dt).days 
+
+    remained_hours = hours - df_days * 24
+
+    dt_str = next_month.strftime(YMD)
+    
+
+    if remained_hours > 0:
+        ls.append({'fd':dt_str,'h':round(remained_hours, 2)})
+        return rec(datetime.strptime(dt_str,YMD),remained_hours,ls)
+    else:
+        return ls
+    
 
 
 def sub_hours(datetime1,datetime2):

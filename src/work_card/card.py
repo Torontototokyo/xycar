@@ -4,43 +4,25 @@ import pandas as pd
 import os
 import work_card.date as date
 from pathlib import Path
+from work_card.db import Card,CarParkingOT,DbConf,init_engine
+import sqlalchemy as s
+from sqlalchemy.orm import Session
+
+def get_engine():
+    conf = DbConf(user='root',password='root',db_name='cars_db',address='127.0.0.1',port=3306)
+    return init_engine(conf)
 
 
 
-def get_project_root():
-    """获取项目根目录"""
-    # 当前文件路径
-    current_file = Path(__file__).resolve()
+def import_expired():
 
-    # 获取祖父目录（上两级）
-    grandparent_dir = current_file.parent.parent.parent
+    engine = get_engine()
+    with Session(engine) as session:
+        
 
-    return grandparent_dir
+        stmt = s.select(CarParkingOT);
+        res = session.execute(stmt).scalars().first()
 
-def get_expired():
-    
-    path = get_project_root()  # 获取项目根目录
-
-    pattern = r".*超时转.*\.xlsx$"  # Match all files ending with ".txt"
-
-    today = datetime.today()
-    
-    expired = []
-    for filename in os.listdir(path):
-
-        if re.search(pattern, filename):
-            sp = filename.split('#')
+        print(getattr(res,'id',None))
             
-            _date = datetime.strptime(sp[0],date.YMD)
-
-            if (today - _date).days > 0:
-
-                df = pd.read_excel(f'{path}/{filename}')
-                df = df[df['超时小时'] > 0]
-                
-                r = df['车牌号码'].to_list()
-
-                expired += r
-                
-    
-    return expired
+        # s.select(Card.id).where(Card.车牌号码 == )
