@@ -339,9 +339,7 @@ class DatabaseConnectionWindow(QMainWindow):
             else:
                 self.console.print_output("⚠️ 没有超时转临停车辆需要导出")
 
-            # except Error as e:
 
-            #     self.console.print_output(translator.get('esdbconn_failed'))
             
             
     

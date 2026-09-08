@@ -295,8 +295,7 @@ def update_or_insert_car_leave_log_summery_by_month(car_no:str,start_dt,session:
     end_dt = date.last_day_of_month(datetime.strptime(start_dt, date.YMD)).strftime(date.YMD)
     # print(f'car_no:{car_no},start_dt:{start_dt},{type(start_dt)},end_dt:{end_dt}')
     hours = sum_logs(car_no,start_dt,end_dt,session)
-    if car_no == '湘-MKA639':
-        print(hours,start_dt,end_dt)
+
     
     if r is None:
         
@@ -400,8 +399,9 @@ def add_or_update_ot_record(session:Session,car_no:str,hours:float):
     first = session.execute(stmt).scalar_one_or_none()
     
     if first:
+        print(first.id,type(first.id))
         update(CarParkingOT).where(CarParkingOT.id == first.id)\
-        .values({hours:hours})
+        .values({'hours':hours})
     else:
         stmt = insert(CarParkingOT).values(
             car_no=car_no,
@@ -518,18 +518,19 @@ def update_card_parking_time_db(engine:Engine):
                 end_dt = r[2]
                 update_card_parking_time(session=session,start_dt=start_dt,end_dt=end_dt,car_no=car_no)
                
-            session.commit()
+            # session.commit()
 
             aroses_stmt = select(CarParkingOT.car_no)\
             .where(CarParkingOT.arose_at == today)
             aroses = session.execute(aroses_stmt).scalars().all()
-            
+
+
 
 
             stmt = select(Card).where(Card.超时小时 > 0)\
             .where(Card.车牌号码.in_(aroses))
             df = pd.read_sql_query(stmt,con=engine)
-            
+
             if len(df) > 0:
                 fname = f'{utils.get_project_root()}/{today}#超时转临停车辆.xlsx'
                 df.to_excel(fname,index=False)
@@ -565,8 +566,7 @@ def get_parked_hours_between(car_no,start_dt,end_dt,session:Session)->float:
         else:
            
             hours += summary_hour(car_no,i,session)
-    if car_no == '湘-MKA639':
-        print(car_no,start_dt,hours)
+    
     return hours
 
 
@@ -623,8 +623,8 @@ def import_logs(df:pd.DataFrame,engine:Engine):
                 enter_time = row['入场时间']
                 leave_time = row['出场时间']
                 parked_time = row['停车时长']
-                if(car_no == '湘-MKA639'):
-                    print(parked_time,leave_time,enter_time,car_no)
+                # if(car_no == '湘-MKA639'):
+                #     print(parked_time,leave_time,enter_time,car_no)
                 
 
                 stmt = select(Logs.id).where(Logs.车牌号码 == car_no)\
