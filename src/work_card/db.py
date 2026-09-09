@@ -374,9 +374,9 @@ def ot_record(car_no:str,session:Session)->float:
 
 def expire_card(session:Session,car_no:str,hours:float,overtime:float,free_h:float,car_state:str='过期')->int:
 
+    # .with_hint('FORCE INDEX (idx_卡状态_车牌号码)',Card)\
     stmt = update(Card).where(Card.车牌号码 == car_no)\
             .where(Card.卡状态.in_(['正常','临期']))\
-            .with_hint('FORCE INDEX (idx_卡状态_车牌号码)',Card)\
             .values({
                 '实际停车时长':hours,
                 '超时小时':overtime,
@@ -501,7 +501,7 @@ def update_card_parking_time_db(engine:Engine):
     
     # table = get_cards_table(metadata=MetaData())
     today = datetime.now().strftime("%Y-%m-%d")
-
+    
     with Session(engine) as session:
         try:
 
@@ -526,7 +526,7 @@ def update_card_parking_time_db(engine:Engine):
 
 
 
-
+           
             stmt = select(Card).where(Card.超时小时 > 0)\
             .where(Card.车牌号码.in_(aroses))
             df = pd.read_sql_query(stmt,con=engine)
@@ -579,6 +579,11 @@ def import_car_cards(df:pd.DataFrame,engine:Engine):
     df = df.replace({np.nan: None})
     with Session(engine) as session:
 
+        stmt = update(Card).where(Card.超时小时 > 0).values({
+            '卡状态':'过期'
+        })
+
+        session.execute(stmt)
         for _, row in df.iterrows():
             car_no = row['车牌号码']
             start_dt = row['开始期限']

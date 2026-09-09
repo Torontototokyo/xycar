@@ -80,11 +80,11 @@ jobs:
       - name: Use the tag
         run: echo "The release tag is ${{ env.TAG }}"
 
-        
+
       - name: Download built EXE
         uses: actions/download-artifact@v4
         with:
-          name: windows-exe
+          name: windows-exe-${{ env.TAG }}
           path: ./artifacts
 
       # 第二步：将下载的 .exe 文件上传到触发工作流的 Release
