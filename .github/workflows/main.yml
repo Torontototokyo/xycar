@@ -74,6 +74,13 @@ jobs:
       contents: write       # 必须授予写入权限，才能上传附件到 Release
     steps:
       # 第一步：下载由 build 任务上传的 .exe 文件
+      - name: Get tag name
+        run: echo "TAG=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
+
+      - name: Use the tag
+        run: echo "The release tag is ${{ env.TAG }}"
+
+        
       - name: Download built EXE
         uses: actions/download-artifact@v4
         with:
