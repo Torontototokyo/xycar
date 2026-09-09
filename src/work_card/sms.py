@@ -14,7 +14,7 @@ from alibabacloud_tea_openapi import models as open_api_models
 from alibabacloud_dysmsapi20170525 import models as dysmsapi_20170525_models
 from alibabacloud_tea_util import models as util_models
 from alibabacloud_tea_util.client import Client as UtilClient
-
+from alibabacloud_dysmsapi20170525 import models as main_models
 
 
 # 获取打包在内部的 .env 文件的路径
@@ -27,6 +27,23 @@ ACCESS_KEY_ID:str = os.getenv("ACCESS_KEY_ID")
 ACCESS_KEY_SECRET:str = os.getenv("ACCESS_KEY_SECRET")
 TEMPLATE_CODE:str = os.getenv("TEMPLATE_CODE")
 SIGN_NAME:str =os.getenv("SIGN_NAME")
+
+# 自定义异常类
+class ApiError(Exception):
+    """我的自定义异常"""
+    def __init__(self, message, field=None):
+        super().__init__(message)
+        self.field = field
+    def to_dict(self):
+        """转换为字典，方便返回JSON"""
+        return {
+            "error": self.message,
+            "status_code": self.status_code,
+            "data": self.response_data
+        }
+
+
+# 使用
 class Sample:
     def __init__(self):
         pass
@@ -66,6 +83,7 @@ class Sample:
         try:
             resp = client.send_sms_with_options(send_sms_request, util_models.RuntimeOptions())
             print(json.dumps(resp, default=str, indent=2))
+            
         except Exception as error:
             # 此处仅做打印展示，请谨慎对待异常处理，在工程项目中切勿直接忽略异常。
             # 错误 message
@@ -73,12 +91,15 @@ class Sample:
             # 诊断地址
             print(error.data.get("Recommend"))
 
+            
+            raise ApiError(f'短信API调用失败,Response Data: {error.message}')
+
     @staticmethod
     def sms(
         car_no: str,
         hour,
         phone_numer
-    ):
+    )->main_models.SendSmsResponse:
         client = Sample.create_client()
         
         send_sms_request = dysmsapi_20170525_models.SendSmsRequest(
@@ -92,30 +113,20 @@ class Sample:
         )
         try:
             resp = client.send_sms_with_options(send_sms_request, util_models.RuntimeOptions())
-            return json.dumps(resp, default=str, indent=2)
+            print(json.dumps(resp, default=str, indent=2))
+            return resp
         except Exception as error:
             raise error
-    @staticmethod
-    async def main_async(
-        args: List[str],
-    ) -> None:
-        client = Sample.create_client()
-        send_sms_request = dysmsapi_20170525_models.SendSmsRequest(
-            phone_numbers='your_value',
-            sign_name='your_value'
-        )
-        try:
-            resp = await client.send_sms_with_options_async(send_sms_request, util_models.RuntimeOptions())
-            print(json.dumps(resp, default=str, indent=2))
-        except Exception as error:
-            # 此处仅做打印展示，请谨慎对待异常处理，在工程项目中切勿直接忽略异常。
-            # 错误 message
-            print(error.message)
-            # 诊断地址
-            print(error.data.get("Recommend"))
+
+        
 
 
 if __name__ == '__main__':
     # Sample.main(sys.argv[1:])
-    Sample.sms(phone_numer='13420789366',car_no='粤KE2030',hour='123')
+    # Sample.sms(phone_numer='13420789366',car_no='粤KE2030',hour='123')
+    # try:
+    res=  Sample.sms(phone_numer='13420789366',car_no='粤KE2030',hour='123')
+        # raise ApiError('sese')
+    # except Exception as e:
+    #     print(e)
 

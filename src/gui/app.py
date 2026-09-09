@@ -242,12 +242,20 @@ class DatabaseConnectionWindow(QMainWindow):
             phone_number = row['手机号码']
             hour = row['超时小时']
             # print(phone_number,car_no,hour)
+            now = pd.Timestamp.now().strftime("%Y-%m-%d %H:%M:%S")
             try:
-                Sample.sms(car_no=car_no,hour=hour,phone_numer=phone_number)
-                now = pd.Timestamp.now().strftime("%Y-%m-%d %H:%M:%S")
-                self.sms_console.print_output(f"✅ {translator.get('sms_success')} {car_no} - {phone_number} {translator.get('time')} : {now}")
+                res = Sample.sms(car_no=car_no,hour=hour,phone_numer=phone_number)
+
+
+                if res.body.code == 'OK':
+                
+                    self.sms_console.print_output(f"✅ {translator.get('sms_success')} {car_no} - {phone_number} {translator.get('time')} : {now}")
+                else:
+                    self.sms_console.print_output(f"❌ {translator.get('sms_failed')} {car_no} - {phone_number} {translator.get('time')} : {now}")
+                    self.sms_console.print_output(f'❌ {res.body.message}')
             except Exception as e:
                 self.sms_console.print_output(f"❌ {translator.get('sms_failed')} {car_no} - {phone_number} {translator.get('time')} : {now}")
+                self.sms_console.print_output(e)
             pass
     def clear_sms_content(self):
         self.sms_file_path.clear()
